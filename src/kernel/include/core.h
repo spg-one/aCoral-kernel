@@ -22,6 +22,7 @@ volatile extern unsigned int acoral_start_sched;
 
 #define DAEM_STACK_SIZE 256
 #define IDLE_STACK_SIZE 128
+#define INIT_STACK_SIZE 512
 
 /**
  * @brief aCoral空闲守护线程idle函数
@@ -57,7 +58,7 @@ void acoral_module_init(void);
 void acoral_start(void);
 
 /**
- * @brief CPU开始创建线程工作，创建idle线程、init线程
+ * @brief CPU开始创建线程工作，创建idle、init、daem线程
  * 
  */
 void acoral_core_cpu_start(void);

@@ -23,7 +23,6 @@ acoral_list_t acoral_res_release_queue; ///< 将被daem线程回收的线程队�
 volatile unsigned int acoral_start_sched = false; ///<aCoral启动后，经过init线程，这个变量就永远变为true
 int daemon_id, idle_id, init_id;
 extern void user_main();
-extern int idle_enable_printf;
 
 char* logo = "\n\
               \n\
@@ -80,10 +79,10 @@ void daem(void *args)
 void init(void *args)
 {
 	ACORAL_LOG_TRACE("Init Thread Start\n");
-	acoral_comm_policy_data_t data;
 
 	acoral_init_list(&time_delay_queue);
 	acoral_init_list(&timeout_queue);
+	acoral_init_list(&acoral_res_release_queue);
 
 	if(acoral_ticks_init()!=0){
 		ACORAL_LOG_ERROR("Ticks Timer Init Failed");
@@ -91,18 +90,9 @@ void init(void *args)
 	}
 	ACORAL_LOG_TRACE("Ticks Init Done");
 
-	/*ticks中断初始化函数*/
 	acoral_start_sched = true;
 
-	/*创建后台服务进程*/
-	acoral_init_list(&acoral_res_release_queue);
-	data.prio = ACORAL_DAEMON_PRIO;
-	data.prio_type = ACORAL_HARD_PRIO;
-	daemon_id = acoral_create_thread(daem, DAEM_STACK_SIZE, NULL, "daemon", NULL, ACORAL_SCHED_POLICY_COMM, &data);
-	if (daemon_id == -1)
-		while (1)
-			;
-			/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/
+	/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/
 #ifdef CFG_SHELL
 	acoral_shell_init();
 #endif
@@ -113,6 +103,7 @@ void init(void *args)
 void acoral_start()
 {
 	ACORAL_LOG_TRACE("Kernel Module Init Start!\n");
+
 	/*内核模块初始化*/
 	acoral_module_init();
 
@@ -123,7 +114,8 @@ void acoral_start()
 void acoral_core_cpu_start()
 {
 	acoral_comm_policy_data_t data;
-	/*创建空闲线程*/
+
+	/*创建idle线程*/
 	acoral_start_sched = false;
 	data.prio = ACORAL_IDLE_PRIO;
 	data.prio_type = ACORAL_HARD_PRIO;
@@ -134,18 +126,28 @@ void acoral_core_cpu_start()
 		{
 		}
 	}
-	/*创建初始化线程,这个调用层次比较多，需要多谢堆栈*/
+
+	/*创建init线程*/
 	data.prio = ACORAL_INIT_PRIO;
 	/*动态堆栈*/
-	init_id = acoral_create_thread(init, 512, "in init", "init", NULL, ACORAL_SCHED_POLICY_COMM, &data);
+	init_id = acoral_create_thread(init, INIT_STACK_SIZE, "in init", "init", NULL, ACORAL_SCHED_POLICY_COMM, &data);
 	if (init_id == -1)
 	{
 		while (1)
 		{
 		}
 	}
-	printf("%s",logo);
 
+	/*创建daem线程*/
+	data.prio = ACORAL_DAEMON_PRIO;
+	data.prio_type = ACORAL_HARD_PRIO;
+	daemon_id = acoral_create_thread(daem, DAEM_STACK_SIZE, NULL, "daemon", NULL, ACORAL_SCHED_POLICY_COMM, &data);
+	if (daemon_id == -1){
+		while (1)
+		{
+		}
+	}	
+	printf("%s",logo);
 	acoral_start_os();
 }
 
