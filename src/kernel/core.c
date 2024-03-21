@@ -82,6 +82,9 @@ void init(void *args)
 	ACORAL_LOG_TRACE("Init Thread Start\n");
 	acoral_comm_policy_data_t data;
 
+	acoral_init_list(&time_delay_queue);
+	acoral_init_list(&timeout_queue);
+
 	if(acoral_ticks_init()!=0){
 		ACORAL_LOG_ERROR("Ticks Timer Init Failed");
 		while(1); //SPG 改成exit系统调用好一点
@@ -157,7 +160,7 @@ void acoral_start_os()
 
 void acoral_module_init()
 {
-	/*中断系统初始化*/
+	/*中断管理系统初始化*/
 	acoral_intr_sys_init();
 
 	/*内存管理系统初始化*/
@@ -166,9 +169,6 @@ void acoral_module_init()
 	/*线程管理系统初始化*/
 	acoral_thread_sys_init();
 
-	/*时钟管理系统初始化*/
-	acoral_time_sys_init();
-
-	/*事件管理系统初始化*/
+	/*线程交互系统初始化*/
 	acoral_evt_sys_init();
 }

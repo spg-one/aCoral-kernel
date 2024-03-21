@@ -43,17 +43,6 @@ int time_to_ticks(unsigned int mtime){
 	return (mtime)*CFG_TICKS_PER_SEC/1000; ///<计算time对应的ticks数量
 }
 
-void acoral_time_sys_init(){
-  	acoral_init_list(&time_delay_queue);
-
-	/*---------------*/
-	/*  新增延时初始化 timeout_queue*/
-	/*  pegasus   0719*/
-	/*---------------*/
-	acoral_init_list(&timeout_queue);
-}
-
-
 unsigned int acoral_get_ticks(){
 	return ticks;
 }
