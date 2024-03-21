@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2024-03-21T07:26:15.645Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.0.4 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="0Wt5cA5vwKPfPLPmENWZ" version="24.0.4" type="device" pages="2">
-  <diagram name="aCoral module" id="fx_ShVIOOxxxuzXgRNjY">
-    <mxGraphModel dx="594" dy="2174" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+<mxfile host="Electron" modified="2024-03-21T08:08:39.067Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.0.4 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="cAU0hY3uC8GBg2MpSZEX" version="24.0.4" type="device" pages="2">
+  <diagram name="aCoral-module" id="fx_ShVIOOxxxuzXgRNjY">
+    <mxGraphModel dx="990" dy="3357" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
