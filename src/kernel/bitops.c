@@ -15,6 +15,7 @@
  */
 
 #include "bitops.h" 
+
 unsigned int acoral_ffs(unsigned int word)
 {
 	unsigned int k;
