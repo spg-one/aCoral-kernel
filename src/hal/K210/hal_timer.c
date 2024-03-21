@@ -1,4 +1,4 @@
-#include "hal_timer.h"
+#include "./include/hal_timer.h"
 #include "autocfg.h"
 
 int hal_timer_init(int ticks_per_sec){

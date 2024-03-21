@@ -13,7 +13,7 @@
  * </table>
  */
 
-#include "hal_int.h"
+#include "./include/hal_int.h"
 #include "lsched.h"
 #include <stdint.h>
 

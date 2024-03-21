@@ -13,7 +13,7 @@
  *  </table>
  */
 
-#include "hal_thread.h"
+#include "./include/hal_thread.h"
 #include <stdio.h>
 /**
  * @brief 线程上下文初始化，用于线程被切换到cpu上运行后，替换之前的线程的上下文
