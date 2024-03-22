@@ -15,7 +15,6 @@
 
 #include "kernel.h"
 #include "hal.h"
-#include "lib.h"
 #include <stdio.h>
 #include <stdbool.h>
 

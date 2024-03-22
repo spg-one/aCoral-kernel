@@ -1,17 +1,10 @@
-
 /**
  * @file bitops.c
  * @author 王彬浩 (SPGGOGOGO@outlook.com)
- * @brief lib层，位图操作
- * @version 1.0
- * @date 2023-05-08
- * @copyright Copyright (c) 2023
- * @revisionHistory
- *  <table>
- *   <tr><th> 版本 <th>作者 <th>日期 <th>修改内容
- *   <tr><td> 0.1 <td>jivin <td> 2010-03-08 <td>Created
- *   <tr><td> 1.0 <td>王彬浩 <td> 2023-05-08 <td>Standardized
- *  </table>
+ * @brief 位图操作
+ * @version 2.0
+ * @date 2024-03-22
+ * @copyright Copyright (c) 2024
  */
 
 #include "bitops.h" 

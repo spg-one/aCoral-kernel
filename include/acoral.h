@@ -35,6 +35,5 @@
 #include "autocfg.h"
 #include "kernel.h"
 #include "hal.h"
-#include "lib.h"
 
 #endif
