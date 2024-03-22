@@ -16,14 +16,6 @@
 #define HAL_TIMER_H
 
 /**
- * @brief 
- * 
- * @return result
- *     - 0      Success
- *     - Other  Fail 
- */
-
-/**
  * @brief 配置ticks定时器的频率,打开其中断，并为其注册中断服务函数acoral_ticks_entry
  * 
  * @param ticks_per_sec 每秒的ticks中断数
@@ -31,8 +23,6 @@
  *     - 0      Success
  *     - Other  Fail 
  */
-int hal_timer_init(int ticks_per_sec);
-
-#define HAL_TIMER_INIT(ticks_per_sec) hal_timer_init(ticks_per_sec)
+int hal_timer_init(int ticks_per_sec, void (*ticks_entry)(void *args), void* args);
 
 #endif

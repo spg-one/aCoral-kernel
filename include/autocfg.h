@@ -17,17 +17,30 @@
 #define AUTOCFG_H
 
 /*
- * SOC select
+ ***************************** SOC select *******************************
  */
-#define CFG_K210 1
-#undef CFG_S3C2440
 
-#ifdef CFG_K210
+/*如果需要新增SOC "XXX"，根据以下步骤：
+ * 1. 在 acoralSOCEnum 中添加 SOC_XXX
+ * 2. #define CFG_SOC XXX
+ * 3. 在hal文件夹中新增XXX文件夹
+ * 4. 在XXX文件夹中实现hal层接口
+ * 5. 在hal.h中新增头文件目录
+ */
+typedef enum{
+  SOC_K210,
+  SOC_S3C2440
+}acoralSOCEnum;
+#define CFG_SOC SOC_K210
+
+//K210
+#if CFG_SOC==SOC_K210
 #define CFG_SMP 
 #endif
 
+
 /*
- * kernel configuration
+ ***************************** kernel configuration *****************************
  */
 #define CFG_MEM2 1 ///<任意大小内存分配系统是否启用
 #define CFG_MEM2_SIZE (102400) ///<任意大小内存分配系统的大小，是从伙伴系统管理的堆内存中拿出一部分
@@ -56,7 +69,7 @@
 #define CFG_SHELL 1 ///<启用shell
 
 /*
- * System hacking
+ ****************************** System hacking *****************************
  */
 #define CFG_BAUD_RATE (115200)
 #define CFG_DEBUG_INFO 1

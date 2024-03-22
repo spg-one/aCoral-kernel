@@ -19,12 +19,14 @@
 #include "autocfg.h"
 
 /* 使用K210 SOC */
-#ifdef CFG_K210
+#if CFG_SOC == SOC_K210
 #include "../K210/include/hal_int.h"
 #include "../K210/include/hal_thread.h"
 #include "../K210/include/hal_timer.h"
 
-
+#elif CFG_SOC == SOC_S3C2440 
 #endif
+
+
 
 #endif /* HAL_H_ */

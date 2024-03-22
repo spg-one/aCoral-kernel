@@ -51,7 +51,7 @@ void acoral_set_ticks(unsigned int time){
   	ticks=time;
 }
 
-void acoral_ticks_entry(int vector){
+void acoral_ticks_entry(){
 
         ticks++;
 	if(acoral_start_sched==true){
@@ -67,7 +67,7 @@ void acoral_ticks_entry(int vector){
 
 int acoral_ticks_init(){
 	ticks=0;    	/*初始化滴答时钟计数器*/
-	return HAL_TIMER_INIT(CFG_TICKS_PER_SEC);
+	return hal_timer_init(CFG_TICKS_PER_SEC, acoral_ticks_entry, NULL);
 }
 
 

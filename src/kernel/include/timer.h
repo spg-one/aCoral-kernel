@@ -26,7 +26,7 @@ extern acoral_list_t timeout_queue;
 
 void acoral_time_init(void);
 int acoral_ticks_init(void);
-void acoral_ticks_entry(int vector);
+void acoral_ticks_entry();
 void time_delay_deal(void);
 
 /**
