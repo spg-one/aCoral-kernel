@@ -16,8 +16,6 @@
 #ifndef ACORAL_CORE_H
 #define ACORAL_CORE_H
 
-#include "autocfg.h"
-
 volatile extern unsigned int acoral_start_sched;
 
 #define DAEM_STACK_SIZE 256
@@ -25,47 +23,9 @@ volatile extern unsigned int acoral_start_sched;
 #define INIT_STACK_SIZE 512
 
 /**
- * @brief aCoral空闲守护线程idle函数
- *
- * @param args
- */
-void idle(void *args);
-
-/**
- * @brief aCoral资源回收线程daem函数
- *
- * @param args
- */
-void daem(void *args);
-
-/**
- * @brief aCoral初始化线程init函数
- *
- * @param args
- */
-void init(void *args);
-
-/**
- * @brief aCoral内核各模块初始化
- * 
- */
-void acoral_module_init(void);
-
-/**
- * @brief  c语言初始化入口函数
+ * @brief aCoral入口
  * 
  */
 void acoral_start(void);
 
-/**
- * @brief CPU开始创建线程工作，创建idle、init、daem线程
- * 
- */
-void acoral_core_cpu_start(void);
-
-/**
- * @brief aCoral最终启动
- * 
- */
-void acoral_start_os(void);
 #endif

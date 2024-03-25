@@ -14,18 +14,17 @@
  *   <tr><td> 1.1 <td>王彬浩 <td> 2023-04-20 <td>optimized 
  *  </table>
  */
-#ifndef SCHED_H
-#define SCHED_H
+#ifndef ACORAL_LSCHED_H
+#define ACORAL_LSCHED_H
 
 #include "thread.h"
 
 extern unsigned char acoral_need_sched; 
 extern unsigned char acoral_sched_locked;
-extern acoral_thread_t *acoral_cur_thread,*acoral_ready_thread;
+extern acoral_thread_t *acoral_cur_thread;
 
 ///就绪队列中的优先级位图的大小，目前等于2，算法就是优先级数目除以32向上取整
 #define PRIO_BITMAP_SIZE ((ACORAL_MAX_PRIO_NUM+31)/32) 
-#define acoral_set_ready_thread(thread) (acoral_ready_thread=(thread))
 
 /**
  * @brief aCoral就绪队列
@@ -59,7 +58,7 @@ void acoral_rdyqueue_del(acoral_thread_t *old);
  * @brief 从就绪队列中选出优先级最高的线程，设为acoral_ready_thread
  * 
  */
-void acoral_select_thread(void);
+acoral_thread_t* acoral_select_thread(void);
 void acoral_sched(void);
 void acoral_real_sched();
 unsigned long acoral_real_intr_sched(unsigned long old_sp);

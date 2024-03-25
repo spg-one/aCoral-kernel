@@ -1,30 +1,31 @@
 /**
  * @file comm_thrd.c
  * @author 王彬浩 (SPGGOGOGO@outlook.com)
- * @brief kernel层，普通（先来先服务线程）策略头文件
- * @version 1.0
- * @date 2022-07-08
- * @copyright Copyright (c) 2023
- * @revisionHistory
- *  <table>
- *   <tr><th> 版本 <th>作者 <th>日期 <th>修改内容
- *   <tr><td> 0.1 <td>jivin <td>2010-03-08 <td>Created
- *   <tr><td> 1.0 <td>王彬浩 <td> 2022-07-08 <td>Standardized
- *  </table>
+ * @brief kernel层，普通（先来先服务线程）策略线程
+ * @version 2.0
+ * @date 2024-03-22
+ * @copyright Copyright (c) 2024
  */
-
+#include "comm_thrd.h"
 #include "thread.h"
 #include "lsched.h"
-#include "hal.h"
 #include "policy.h"
-#include "comm_thrd.h"
 #include "int.h"
-#include <stdio.h>
-#include "dag.h"
+#include "log.h"
 
-acoral_sched_policy_t comm_policy; ///< 普通线程策略控制块
+#include "hal.h"
 
-int comm_policy_thread_init(acoral_thread_t *thread, void (*route)(void *args), void *args, void *data)
+
+/**
+ * @brief 初始化普通线程的一些数据
+ * 
+ * @param thread TCB指针
+ * @param route 线程函数
+ * @param args 线程函数参数
+ * @param data 线程私有数据
+ * @return int 线程id
+ */
+static int comm_policy_thread_init(acoral_thread_t *thread, void (*route)(void *args), void *args, void *data)
 {
 	unsigned int prio;
 	acoral_comm_policy_data_t *policy_data;
@@ -47,7 +48,7 @@ int comm_policy_thread_init(acoral_thread_t *thread, void (*route)(void *args), 
 
 	if (acoral_thread_init(thread, route, comm_thread_exit, args) != 0)
 	{
-		printf("No thread stack:%s\n", thread->name);
+		ACORAL_LOG_ERROR("No thread stack:%s", thread->name);
 		acoral_enter_critical();
 		acoral_release_res((acoral_res_t *)thread);
 		acoral_exit_critical();
@@ -58,8 +59,10 @@ int comm_policy_thread_init(acoral_thread_t *thread, void (*route)(void *args), 
 	return thread->res.id;
 }
 
+acoral_sched_policy_t comm_policy;
 void comm_policy_init()
 {
+
 	comm_policy.type = ACORAL_SCHED_POLICY_COMM;
 	comm_policy.policy_thread_init = comm_policy_thread_init;
 	comm_policy.policy_thread_release = NULL;

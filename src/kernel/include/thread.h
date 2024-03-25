@@ -49,7 +49,7 @@ typedef enum{
 	ACORAL_THREAD_STATE_READY = 1,			///表示线程已经被挂载到acoral_ready_queues，就绪状态
 	ACORAL_THREAD_STATE_SUSPEND = 1<<1,		///表示线程已经被从acoral_ready_queues取下，挂起状态
 	ACORAL_THREAD_STATE_RUNNING = 1<<2, 	///表示线程正在运行
-	ACORAL_THREAD_STATE_EXIT = 1<<3,		///表示线程已经运行完毕，等待被切换彻底送走
+	ACORAL_THREAD_STATE_EXIT = 1<<3,		///表示线程已经运行完毕，但还不能被daem线程释放，等待被切换之后才能彻底送走
 	ACORAL_THREAD_STATE_RELEASE = 1<<4,		///表示线程已经运行完毕并已经被切换，等待daem回收TCB和堆栈资源
 	ACORAL_THREAD_STATE_DELAY = 1<<5,		///表示线程将在一段时间之后被重新唤醒并挂载到acoral_ready_queues上，对于普通线程来说，就是调用了delay接口，对于周期线程来说，就是周期
 }acoralThreadStateEnum;

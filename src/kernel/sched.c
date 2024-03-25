@@ -30,7 +30,6 @@ unsigned char acoral_need_sched;
 
 unsigned char acoral_sched_locked = true;	 ///< aCoral初始化完成之前，调度都是被上锁的，即不允许调度。
 acoral_thread_t *acoral_cur_thread;		///<acoral当前运行的线程
-acoral_thread_t *acoral_ready_thread;	///<下一个将被调度运行的线程
 
 acoral_rdy_queue_t acoral_ready_queues; ///<aCoral就绪队列
 /* 之前是static acoral_rdy_queue_t acoral_ready_queues[HAL_MAX_CPU],*/
@@ -146,12 +145,11 @@ void acoral_real_sched()
 	acoral_need_sched = false;
 	prev = acoral_cur_thread;
 	/*选择最高优先级线程*/
-	acoral_select_thread();
-	next = acoral_ready_thread;
+	next = acoral_select_thread();
 	if (prev != next)
 	{
 		acoral_set_running_thread(next);
-		ACORAL_LOG_TRACE("Switch to Thread: %s\n",acoral_cur_thread->name);
+		ACORAL_LOG_TRACE("Switch to Thread: %s",acoral_cur_thread->name);
 		if (prev->state == ACORAL_THREAD_STATE_EXIT)
 		{
 			prev->state = ACORAL_THREAD_STATE_RELEASE;
@@ -170,8 +168,7 @@ unsigned long acoral_real_intr_sched(unsigned long old_sp)
 	acoral_need_sched = false;
 	prev = acoral_cur_thread;
 	/*选择最高优先级线程*/
-	acoral_select_thread();
-	next = acoral_ready_thread;
+	next = acoral_select_thread();
 	if (prev != next)
 	{
 		acoral_set_running_thread(next);
@@ -189,7 +186,7 @@ unsigned long acoral_real_intr_sched(unsigned long old_sp)
 	return old_sp;
 }
 
-void acoral_select_thread()
+acoral_thread_t* acoral_select_thread()
 {
 	unsigned int index;
 	acoral_rdy_queue_t *rdy_queue;
@@ -202,5 +199,5 @@ void acoral_select_thread()
 	queue = rdy_queue->queue + index;
 	head = queue;
 	thread = list_entry(head->next, acoral_thread_t, ready);
-	acoral_set_ready_thread(thread);
+	return thread;
 }

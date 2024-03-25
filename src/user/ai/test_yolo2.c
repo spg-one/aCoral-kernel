@@ -111,7 +111,7 @@ static void lable_init(void)
  */
 static void rgb888_to_lcd(uint8_t *src, uint16_t *dest, size_t width, size_t height)
 {
-    size_t i, chn_size = width * height;
+    size_t chn_size = width * height;
     for (size_t i = 0; i < width * height; i++)
     {
         uint8_t r = src[i];
@@ -249,13 +249,13 @@ int test_yolo2(void)
     io_set_power();
 
     /* LCD init */
-    ACORAL_LOG_TRACE("YOLO2 LCD Init\n");
+    ACORAL_LOG_TRACE("YOLO2 LCD Init");
     lcd_init();
     lcd_set_direction(DIR_YX_RLDU);
     lcd_clear(BLUE);
 
     /* DVP init */
-    ACORAL_LOG_TRACE("YOLO2 DVP Init\n");
+    ACORAL_LOG_TRACE("YOLO2 DVP Init");
     dvp_init(8); //SPG 这里完成了对dvp接口中像素输出速率时钟pclk和控制信号时钟scl的初始化
     dvp_set_xclk_rate(24000000); //SPG 设置dvp接口的输入基准时钟信号xclk来自于apb总线频率，xclk就是上面scl和pclk的基准
     dvp_enable_burst();

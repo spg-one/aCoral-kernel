@@ -13,7 +13,6 @@
  *  </table>
  */
 
-
 #include "hal.h"
 #include "lsched.h"
 #include "timer.h"
@@ -22,7 +21,6 @@
 #include "int.h"
 #include "policy.h"
 #include <stdio.h>
-
 
 extern acoral_list_t acoral_res_release_queue;
 extern void acoral_evt_queue_del(acoral_thread_t *thread);
@@ -102,10 +100,9 @@ void acoral_resume_thread(acoral_thread_t *thread){
 		return;
 
 	acoral_enter_critical();
-	/**/
 	acoral_rdyqueue_add(thread);
 	acoral_exit_critical();
-	/**/
+	
 	acoral_sched();
 }
 
