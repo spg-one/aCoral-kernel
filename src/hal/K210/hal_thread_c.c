@@ -50,6 +50,7 @@ unsigned int* hal_stack_init(unsigned int *stack, void *route, void *exit, void 
     frame->gp      = (unsigned long)&__global_pointer$; //global pointer寄存器应该是不变的，永远是__global_pointer$这个值
 
     /* force to machine mode(MPP=11) and set MPIE to 1 ，在线程切换时，会使用mret指令，将MPIE赋给MIE，即打开中断 */
+    //SPG 这里有一个问题，就是对于init线程，切换init上下文到init第一行代码关中断，这中间中断是打开的，虽然很短，但如果发生中断，可能会发生问题
     frame->mstatus = 0x00007880;
     
     return stk;

@@ -58,6 +58,8 @@ static void init()
 		exit(1);
 	}
 	ACORAL_LOG_TRACE("Ticks Init Done");
+
+	/* 开中断，此时系统才真正能调度 */
 	acoral_intr_enable();
 
 	/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/

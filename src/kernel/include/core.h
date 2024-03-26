@@ -9,9 +9,9 @@
 #ifndef ACORAL_CORE_H
 #define ACORAL_CORE_H
 
-#define DAEM_STACK_SIZE 256
-#define IDLE_STACK_SIZE 128
-#define INIT_STACK_SIZE 512
+#define DAEM_STACK_SIZE (256)
+#define IDLE_STACK_SIZE (128)
+#define INIT_STACK_SIZE (512)
 
 /**
  * @brief aCoral入口
