@@ -23,7 +23,7 @@ typedef enum{
                                         }
 
 #define ACORAL_LOG_INFO(format , ...)   { \
-                                          printf("[\033[0;37mLOG_INFO\033[0m] %s:%d -> "format, __FILE__, __LINE__ , ##__VA_ARGS__); \
+                                          printf("[\033[0;35mLOG_INFO\033[0m] %s:%d -> "format, __FILE__, __LINE__ , ##__VA_ARGS__); \
                                           printf("\n"); \
                                         }
 

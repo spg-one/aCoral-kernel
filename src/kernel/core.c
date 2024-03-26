@@ -13,9 +13,7 @@
 #include <stdlib.h>
 
 acoral_list_t acoral_res_release_queue; ///< 将被daem线程回收的线程队列
-volatile unsigned int acoral_start_sched = false; ///<aCoral启动后，经过init线程，这个变量就永远变为true
 int daemon_id, idle_id, init_id;
-extern void user_main();
 
 char* logo = "\n\
               \n\
@@ -30,6 +28,8 @@ char* logo = "\n\
               \n\
               \n\
 ";
+
+extern void user_main();
 
 /**
  * @brief aCoral空闲线程idle函数
@@ -59,7 +59,6 @@ static void init()
 	}
 	ACORAL_LOG_TRACE("Ticks Init Done");
 	acoral_intr_enable();
-	acoral_start_sched = true;
 
 	/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/
 #ifdef CFG_SHELL
@@ -124,12 +123,11 @@ static void module_init()
  * @brief 主CPU创建idle、init、daem线程
  * 
  */
-static void acoral_main_cpu_start()
+static void main_cpu_start()
 {
 	acoral_comm_policy_data_t data;
 
 	/* 创建idle线程 */
-	acoral_start_sched = false;
 	data.prio = ACORAL_IDLE_PRIO;
 	data.prio_type = ACORAL_HARD_PRIO;
 	idle_id = acoral_create_thread(idle, IDLE_STACK_SIZE, NULL, "idle", NULL, ACORAL_SCHED_POLICY_COMM, &data);
@@ -175,5 +173,5 @@ void system_start()
 	module_init();
 	ACORAL_LOG_TRACE("Kernel Module Init Done");
 
-	acoral_main_cpu_start();
+	main_cpu_start();
 }

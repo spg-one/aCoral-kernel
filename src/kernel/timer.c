@@ -52,17 +52,14 @@ void acoral_set_ticks(unsigned int time){
 }
 
 void acoral_ticks_entry(){
-
-        ticks++;
-	if(acoral_start_sched==true){
-		time_delay_deal();
-		acoral_policy_delay_deal();
-		/*--------------------*/
-		/* 超时链表处理函数*/
-		/* pegasus  0719*/
-		/*--------------------*/
-		timeout_delay_deal();
-	}
+	ticks++;
+	time_delay_deal();
+	acoral_policy_delay_deal();
+	/*--------------------*/
+	/* 超时链表处理函数*/
+	/* pegasus  0719*/
+	/*--------------------*/
+	timeout_delay_deal();
 }
 
 int acoral_ticks_init(){

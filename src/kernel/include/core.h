@@ -9,8 +9,6 @@
 #ifndef ACORAL_CORE_H
 #define ACORAL_CORE_H
 
-volatile extern unsigned int acoral_start_sched;
-
 #define DAEM_STACK_SIZE 256
 #define IDLE_STACK_SIZE 128
 #define INIT_STACK_SIZE 512

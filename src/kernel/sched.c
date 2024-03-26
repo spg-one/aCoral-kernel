@@ -131,9 +131,7 @@ void acoral_sched()
 
 	if (acoral_sched_locked)
 		return;
-	/*如果还没有开始调度，则返回*/
-	if (!acoral_start_sched)
-		return;
+		
 	/*这个函数进行简单处理后会直接或间接调用acoral_real_sched,或者acoral_real_intr_sched*/
 	HAL_SCHED_BRIDGE();
 	return;

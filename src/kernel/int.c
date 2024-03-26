@@ -57,9 +57,6 @@ unsigned long acoral_intr_exit(unsigned long old_sp){
 
 	if(acoral_sched_locked)
 	    return ;
-
-	if (!acoral_start_sched)
-	    return ;
       
       /*如果需要调度，则调用此函数*/
 	return HAL_INTR_EXIT_BRIDGE(old_sp);
