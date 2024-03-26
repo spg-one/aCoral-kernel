@@ -19,7 +19,7 @@
 #include "plic.h"
 #include <stdio.h>
 
-void acoral_intr_sys_init()
+void system_intr_module_init()
 {
 	/*中断底层初始化函数*/
 	plic_init();
@@ -49,13 +49,13 @@ void acoral_default_isr(int vector){
 }
 
 unsigned long acoral_intr_exit(unsigned long old_sp){
-    if(!acoral_need_sched)
+    if(!system_need_sched)
 	    return ;
 
 	if(acoral_intr_nesting)
 	    return ;
 
-	if(acoral_sched_locked)
+	if(system_sched_locked)
 	    return ;
       
       /*如果需要调度，则调用此函数*/

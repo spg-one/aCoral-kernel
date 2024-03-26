@@ -58,7 +58,7 @@ int period_policy_thread_init(acoral_thread_t *thread,void (*route)(void *args),
 		private_data->args=args;
 		thread->private_data=private_data;
 	}
-	if(acoral_thread_init(thread,route,period_thread_exit,args)!=0){
+	if(system_thread_init(thread,route,period_thread_exit,args)!=0){
 		printf("No thread stack:%s\n",thread->name);
 		acoral_enter_critical();
 		acoral_release_res((acoral_res_t *)thread);

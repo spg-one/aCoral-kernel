@@ -22,7 +22,7 @@
 #include "policy.h"
 #include <stdio.h>
 
-extern acoral_list_t acoral_res_release_queue;
+extern acoral_list_t daem_res_release_queue;
 extern void acoral_evt_queue_del(acoral_thread_t *thread);
 acoral_list_t acoral_threads_queue; ///<aCoral全局所有线程队列
 acoral_pool_ctrl_t acoral_thread_pool_ctrl;
@@ -53,20 +53,11 @@ void acoral_release_thread1(acoral_thread_t *thread){
 	acoral_list_t *head;
 	acoral_thread_t *daem;
 	thread->state=ACORAL_THREAD_STATE_EXIT;
-	head=&acoral_res_release_queue;
+	head=&daem_res_release_queue;
 	acoral_list_add2_tail(&thread->waiting,head);
 
 	daem=(acoral_thread_t *)acoral_get_res_by_id(daemon_id);
 	acoral_rdy_thread(daem);
-}
-
-void acoral_release_thread(acoral_res_t *res){
-	acoral_thread_t *thread;
-	thread=(acoral_thread_t *)res;
-	acoral_list_del(&thread->global_list);
-	acoral_policy_thread_release(thread);
-  	acoral_free((void *)thread->stack_buttom);
-	acoral_release_res((acoral_res_t *)thread);
 }
 
 void acoral_suspend_thread(acoral_thread_t *thread){
@@ -209,7 +200,7 @@ acoral_thread_t *acoral_alloc_thread(){
   	return (acoral_thread_t *)acoral_get_res(&acoral_thread_pool_ctrl);
 }
 
-unsigned int acoral_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args){
+unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args){
 	unsigned int stack_size=thread->stack_size;
 	if(thread->stack_buttom==NULL){
 		if(stack_size<CFG_MIN_STACK_SIZE)
@@ -253,7 +244,7 @@ void acoral_sched_mechanism_init(){
 	acoral_init_list(&acoral_threads_queue);
 }
 
-void acoral_thread_sys_init(){
+void system_thread_module_init(){
 	acoral_sched_mechanism_init();
 	acoral_sched_policy_init();
 }

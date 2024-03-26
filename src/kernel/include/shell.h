@@ -37,7 +37,7 @@ struct acoral_shell_cmd_t{
 	acoral_shell_cmd_t *next;			 ///<创建的时候置位NULL就好
 };
 
-void acoral_shell_init(void);
+void system_shell_init();
 void acoral_shell_enter(void *args);
 void cmd_init(void);
 

@@ -98,19 +98,13 @@ typedef struct acoral_thread_tcb{//SPG加注释
  */
 void acoral_release_thread1(acoral_thread_t *thread);
 
-/**
- * @brief daem线程用来释放tcb空间的
- * 
- * @param thread 线程指针
- */
-void acoral_release_thread(acoral_res_t *thread);
 void acoral_suspend_thread(acoral_thread_t *thread);
 void acoral_resume_thread(acoral_thread_t *thread);
 void acoral_kill_thread(acoral_thread_t *thread);
-unsigned int acoral_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args);
+unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args);
 acoral_thread_t *acoral_alloc_thread(void);
 void acoral_thread_pool_init(void);
-void acoral_thread_sys_init(void);
+void system_thread_module_init(void);
 void acoral_unrdy_thread(acoral_thread_t *thread);
 void acoral_rdy_thread(acoral_thread_t *thread);
 void acoral_thread_move2_tail_by_id(int thread_id);

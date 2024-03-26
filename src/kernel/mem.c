@@ -30,7 +30,7 @@ extern int _heap_end;	///< 堆内存结束地址，定义于链接脚本
 extern int _sdk_heap_start;	
 extern int _sdk_heap_end;	
 
-void acoral_mem_sys_init()
+void system_mem_module_init()
 {
 #ifdef CFG_DEBUG_INFO
 	ACORAL_LOG_DEBUG("aCoral Heap Start: 0x%x, aCoral Heap End: 0x%x",(unsigned int)&_heap_start, (unsigned int)&_heap_end);
@@ -206,7 +206,7 @@ unsigned int buddy_init(unsigned int start_adr, unsigned int end_adr)
 	while (num >= max_num)
 	{
 		index = (o_num >> level) - 1;
-		acoral_set_bit(index, acoral_mem_ctrl->bitmap[level - 1]);
+		acoral_set_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level - 1]);
 		num -= max_num;
 		o_num += max_num;
 	}
@@ -223,7 +223,7 @@ unsigned int buddy_init(unsigned int start_adr, unsigned int end_adr)
 		if (num >= max_num)
 		{
 			acoral_mem_blocks[BLOCK_INDEX(o_num)].level = -1;
-			acoral_set_bit(index, acoral_mem_ctrl->bitmap[level - 1]);
+			acoral_set_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level - 1]);
 			acoral_mem_ctrl->free_list[level - 1][cur] = -1;
 			acoral_mem_ctrl->free_cur[level - 1] = cur;
 			o_num += max_num;
@@ -254,15 +254,15 @@ static int recus_malloc(int level)
 			return -1;
 		index = num >> level + 1;							   // 计算在位图中位置
 		cur = index / 32;									   // 计算在位图链表中位置
-		acoral_set_bit(index, acoral_mem_ctrl->bitmap[level]); // 在位图中置1，把偶数块分出去
+		acoral_set_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]); // 在位图中置1，把偶数块分出去
 		// 当前层无空闲，两个空闲块是从上层分配的，所以空闲位图链表更改，然后分配完一块还有一块，所以移动空闲位图链表头
 		acoral_mem_ctrl->free_list[level][cur] = -1;
 		acoral_mem_ctrl->free_cur[level] = cur;
 		return num;
 	}
-	index = acoral_ffs(acoral_mem_ctrl->bitmap[level][cur]); // 获取空闲块在其32位图中的位置
+	index = acoral_find_first_bit_in_integer(acoral_mem_ctrl->bitmap[level][cur]); // 获取空闲块在其32位图中的位置
 	index = cur * 32 + index;								 // 计算空闲块实际位置
-	acoral_clear_bit(index, acoral_mem_ctrl->bitmap[level]); // 从只有一块空闲变成两块都不空闲了，所以清0
+	acoral_clear_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]); // 从只有一块空闲变成两块都不空闲了，所以清0
 	if (acoral_mem_ctrl->bitmap[level][cur] == 0)			 // 如果此位图无空闲块了
 	{
 		acoral_mem_ctrl->free_cur[level] = acoral_mem_ctrl->free_list[level][cur]; // 移动空闲位图链表头
@@ -309,7 +309,7 @@ static void *r_malloc(unsigned char level)
 		}
 		index = num >> level + 1;
 		cur = index / 32;
-		acoral_set_bit(index, acoral_mem_ctrl->bitmap[level]);
+		acoral_set_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]);
 		acoral_mem_ctrl->free_list[level][cur] = -1;
 		acoral_mem_ctrl->free_cur[level] = cur;
 		if ((num & 0x1) == 0)
@@ -320,9 +320,9 @@ static void *r_malloc(unsigned char level)
 		acoral_exit_critical();
 		return (void *)(acoral_mem_ctrl->start_adr + (num << BLOCK_SHIFT));
 	}
-	index = acoral_ffs(acoral_mem_ctrl->bitmap[level][cur]);
+	index = acoral_find_first_bit_in_integer(acoral_mem_ctrl->bitmap[level][cur]);
 	index = index + cur * 32;
-	acoral_clear_bit(index, acoral_mem_ctrl->bitmap[level]);
+	acoral_clear_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]);
 	if (acoral_mem_ctrl->bitmap[level][cur] == 0)
 	{
 		acoral_mem_ctrl->free_cur[level] = acoral_mem_ctrl->free_list[level][cur];
@@ -434,14 +434,14 @@ void buddy_free(void *ptr)
 			return;
 		}
 		/*伙伴分配出去，如果对应的位为1,肯定是回收过一次了*/
-		if (buddy_level == 0 && acoral_get_bit(index, acoral_mem_ctrl->bitmap[level]))
+		if (buddy_level == 0 && acoral_get_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]))
 		{
 			printf("Address:0x%x have been freed\n", (unsigned int)ptr);
 			acoral_exit_critical();
 			return;
 		}
 		/*伙伴没有分配出去了，如果对应的位为0,肯定是回收过一次了*/
-		if (buddy_level < 0 && !acoral_get_bit(index, acoral_mem_ctrl->bitmap[level]))
+		if (buddy_level < 0 && !acoral_get_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]))
 		{
 			printf("Address:0x%x have been freed\n", (unsigned)ptr);
 			acoral_exit_critical();
@@ -464,7 +464,7 @@ void buddy_free(void *ptr)
 	if (level == max_level - 1) // 最大内存块直接回收
 	{
 		index = num >> level;								   // 最大内存块层，一块一位
-		acoral_set_bit(index, acoral_mem_ctrl->bitmap[level]); // 标志空闲
+		acoral_set_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]); // 标志空闲
 		acoral_exit_critical();
 		return;
 	}
@@ -472,9 +472,9 @@ void buddy_free(void *ptr)
 	while (level < max_level)	// 其余层回收，有可能回收到最大层
 	{
 		cur = index / 32;
-		if (!acoral_get_bit(index, acoral_mem_ctrl->bitmap[level])) // 两块都没空闲
+		if (!acoral_get_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level])) // 两块都没空闲
 		{
-			acoral_set_bit(index, acoral_mem_ctrl->bitmap[level]);								// 设置成有一块空闲
+			acoral_set_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]);								// 设置成有一块空闲
 			if (acoral_mem_ctrl->free_cur[level] < 0 || cur < acoral_mem_ctrl->free_cur[level]) // 无空闲块或者释放的位比空闲位图链表头小
 			{
 				acoral_mem_ctrl->free_list[level][cur] = acoral_mem_ctrl->free_cur[level];
@@ -483,7 +483,7 @@ void buddy_free(void *ptr)
 			break;
 		}
 		/*有个伙伴是空闲的，向上级回收*/
-		acoral_clear_bit(index, acoral_mem_ctrl->bitmap[level]);
+		acoral_clear_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]);
 		if (cur == acoral_mem_ctrl->free_cur[level])
 			acoral_mem_ctrl->free_cur[level] = acoral_mem_ctrl->free_list[level][cur];
 		level++;

@@ -19,8 +19,8 @@
 
 #include "thread.h"
 
-extern unsigned char acoral_need_sched; 
-extern unsigned char acoral_sched_locked;
+extern unsigned char system_need_sched; 
+extern unsigned char system_sched_locked;
 extern acoral_thread_t *acoral_cur_thread;
 
 ///就绪队列中的优先级位图的大小，目前等于2，算法就是优先级数目除以32向上取整
@@ -36,7 +36,7 @@ typedef struct{
 	acoral_list_t queue[ACORAL_MAX_PRIO_NUM];	///<每一个优先级都有独立的队列
 }acoral_rdy_queue_t;
 
-void acoral_set_running_thread(acoral_thread_t *thread);
+void system_set_running_thread(acoral_thread_t *thread);
 void acoral_thread_runqueue_init(void);
 
 /**
@@ -55,10 +55,12 @@ void acoral_rdyqueue_del(acoral_thread_t *old);
 
 
 /**
- * @brief 从就绪队列中选出优先级最高的线程，设为acoral_ready_thread
+ * @brief 从就绪队列中选出优先级最高的线程
  * 
+ * @return acoral_thread_t* 优先级最高的线程
  */
-acoral_thread_t* acoral_select_thread(void);
+acoral_thread_t* acoral_select_thread();
+
 void acoral_sched(void);
 void acoral_real_sched();
 unsigned long acoral_real_intr_sched(unsigned long old_sp);

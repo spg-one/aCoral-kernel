@@ -46,7 +46,7 @@ static int comm_policy_thread_init(acoral_thread_t *thread, void (*route)(void *
 	//  }
 	thread->prio = prio;
 
-	if (acoral_thread_init(thread, route, comm_thread_exit, args) != 0)
+	if (system_thread_init(thread, route, comm_thread_exit, args) != 0)
 	{
 		ACORAL_LOG_ERROR("No thread stack:%s", thread->name);
 		acoral_enter_critical();
@@ -62,7 +62,6 @@ static int comm_policy_thread_init(acoral_thread_t *thread, void (*route)(void *
 acoral_sched_policy_t comm_policy;
 void comm_policy_init()
 {
-
 	comm_policy.type = ACORAL_SCHED_POLICY_COMM;
 	comm_policy.policy_thread_init = comm_policy_thread_init;
 	comm_policy.policy_thread_release = NULL;

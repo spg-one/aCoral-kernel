@@ -56,7 +56,7 @@ typedef struct {
 
 
 void acoral_default_isr(int vector);
-void acoral_intr_sys_init();
+void system_intr_module_init();
 
 /***************中断相关API****************/
 

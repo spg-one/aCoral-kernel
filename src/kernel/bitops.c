@@ -9,10 +9,9 @@
 
 #include "bitops.h" 
 
-unsigned int acoral_ffs(unsigned int word)
+unsigned int acoral_find_first_bit_in_integer(unsigned int word)
 {
-	unsigned int k;
-	k = 31;
+	unsigned int k = 31;
 	if (word & 0x0000ffff) { k -= 16; word <<= 16; }
 	if (word & 0x00ff0000) { k -= 8;  word <<= 8;  }
 	if (word & 0x0f000000) { k -= 4;  word <<= 4;  }
@@ -21,7 +20,7 @@ unsigned int acoral_ffs(unsigned int word)
         return k;
 }
 
-unsigned int acoral_find_first_bit(const unsigned int *b,unsigned int length)
+unsigned int acoral_find_first_bit_in_array(const unsigned int *b,unsigned int length)
 {
 	unsigned int v;
 	unsigned int off;
@@ -30,10 +29,10 @@ unsigned int acoral_find_first_bit(const unsigned int *b,unsigned int length)
 		if (v)
 			break;
 	}
-	return acoral_ffs(v) + off * 32;
+	return acoral_find_first_bit_in_integer(v) + off * 32;
 }
 
-void acoral_set_bit(int nr,unsigned int *bitmap)
+void acoral_set_bit_in_bitmap(int nr,unsigned int *bitmap)
 {
 	unsigned int oldval, mask = 1UL << (nr & 31);
 	unsigned int *p;
@@ -42,7 +41,7 @@ void acoral_set_bit(int nr,unsigned int *bitmap)
 	*p = oldval | mask;
 }
 
-void acoral_clear_bit(int nr,unsigned int *bitmap)
+void acoral_clear_bit_in_bitmap(int nr,unsigned int *bitmap)
 {
 	unsigned int oldval, mask = 1UL << (nr & 31);
 	unsigned int *p;
@@ -51,7 +50,7 @@ void acoral_clear_bit(int nr,unsigned int *bitmap)
 	*p = oldval &(~mask);
 }
 
-unsigned int acoral_get_bit(int nr,unsigned int *bitmap)
+unsigned int acoral_get_bit_in_bitmap(int nr,unsigned int *bitmap)
 {
 	unsigned int oldval, mask = 1UL << (nr & 31);
 	unsigned int *p;

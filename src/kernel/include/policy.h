@@ -44,7 +44,7 @@ void acoral_policy_delay_deal(void);
 acoral_sched_policy_t *acoral_get_policy_ctrl(unsigned char type);
 int acoral_policy_thread_init(acoralSchedPolicyEnum policy,acoral_thread_t *thread,void (*route)(void *args),void *args,void *data);
 void acoral_sched_policy_init(void);
-void acoral_policy_thread_release(acoral_thread_t *thread);
+void system_policy_thread_release(acoral_thread_t *thread);
 
 /***************调度策略相关API****************/
 

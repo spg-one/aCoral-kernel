@@ -228,7 +228,7 @@ typedef struct {
  * @brief 内存管理系统初始化
  * @note 初始化两级内存管理系统，第一级为伙伴系统，第二级为任意大小内存分配系统（名字里带"2")和资源池系统
  */
-void acoral_mem_sys_init();
+void system_mem_module_init();
 
 
 /**

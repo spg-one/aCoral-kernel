@@ -59,7 +59,7 @@ void acoral_list_del(acoral_list_t *entry);
 extern acoral_list_t acoral_threads_queue;
 extern acoral_list_t time_delay_queue;
 extern acoral_list_t timeout_queue;
-extern acoral_list_t acoral_res_release_queue;
+extern acoral_list_t daem_res_release_queue;
 extern acoral_list_t period_delay_queue;
 // extern acoral_rdy_queue_t acoral_ready_queues; 有循环包含，所以别把注释打开
 #endif

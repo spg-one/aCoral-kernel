@@ -126,7 +126,7 @@ void cmd_exe(char *buf){
 }
 
 #define SHELL_STACK_SIZE 1024
-void acoral_shell_init(void){
+void system_shell_init(){
 
 	acoral_comm_policy_data_t data;
 	head_cmd=NULL;

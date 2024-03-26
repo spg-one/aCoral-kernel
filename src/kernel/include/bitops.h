@@ -18,7 +18,7 @@
  * @param length 数组长度
  * @return int 最低非0bit的位置
  */
-unsigned int acoral_find_first_bit(const unsigned int *b,unsigned int length);
+unsigned int acoral_find_first_bit_in_array(const unsigned int *b,unsigned int length);
 
 /**
  * @brief 设置位图中特定位为1
@@ -26,7 +26,7 @@ unsigned int acoral_find_first_bit(const unsigned int *b,unsigned int length);
  * @param nr 要设置的位的位置
  * @param p 位图
  */
-void acoral_set_bit(int nr,unsigned int *p);
+void acoral_set_bit_in_bitmap(int nr,unsigned int *p);
 
 /**
  * @brief 设置位图中特定位为0
@@ -34,7 +34,7 @@ void acoral_set_bit(int nr,unsigned int *p);
  * @param nr 要设置的位的位置
  * @param p 位图
  */
-void acoral_clear_bit(int nr,unsigned int *p);
+void acoral_clear_bit_in_bitmap(int nr,unsigned int *p);
 
 /**
  * @brief 查找位图中的一位
@@ -43,7 +43,7 @@ void acoral_clear_bit(int nr,unsigned int *p);
  * @param bitmap 位图
  * @return int 值
  */
-unsigned int acoral_get_bit(int nr,unsigned int *bitmap);
+unsigned int acoral_get_bit_in_bitmap(int nr,unsigned int *bitmap);
 
 /**
  * @brief 二分法查找整型数为1的最低位
@@ -51,6 +51,6 @@ unsigned int acoral_get_bit(int nr,unsigned int *bitmap);
  * @param word 整型数
  * @return int 位置
  */
-unsigned int acoral_ffs(unsigned int word);
+unsigned int acoral_find_first_bit_in_integer(unsigned int word);
 
 #endif

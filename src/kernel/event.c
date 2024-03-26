@@ -21,7 +21,7 @@
 #include <stdio.h>
 
 acoral_pool_ctrl_t acoral_evt_pool_ctrl;
-void acoral_evt_sys_init()
+void system_evt_module_init()
 {
 	acoral_evt_pool_init();
 }

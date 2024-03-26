@@ -64,7 +64,7 @@ void acoral_policy_delay_deal(){
 	}
 }
 
-void acoral_policy_thread_release(acoral_thread_t *thread){
+void system_policy_thread_release(acoral_thread_t *thread){
 	acoral_sched_policy_t   *policy_ctrl;
 	policy_ctrl=acoral_get_policy_ctrl(thread->policy);
 	if(policy_ctrl->policy_thread_release!=NULL)

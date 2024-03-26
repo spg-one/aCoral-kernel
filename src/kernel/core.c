@@ -12,7 +12,7 @@
 
 #include <stdlib.h>
 
-acoral_list_t acoral_res_release_queue; ///< 将被daem线程回收的线程队列
+acoral_list_t daem_res_release_queue; ///< 将被daem线程回收的线程队列
 int daemon_id, idle_id, init_id;
 
 char* logo = "\n\
@@ -51,9 +51,9 @@ static void init()
 
 	acoral_init_list(&time_delay_queue);
 	acoral_init_list(&timeout_queue);
-	acoral_init_list(&acoral_res_release_queue);
+	acoral_init_list(&daem_res_release_queue);
 
-	if(acoral_ticks_init()!=0){
+	if(system_ticks_init()!=0){
 		ACORAL_LOG_ERROR("Ticks Init Failed");
 		exit(1);
 	}
@@ -64,11 +64,10 @@ static void init()
 
 	/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/
 #ifdef CFG_SHELL
-	acoral_shell_init();
+	system_shell_init();
 #endif
 	user_main();
 	ACORAL_LOG_TRACE("Init Thread Done");
-	
 }
 
 /**
@@ -79,7 +78,7 @@ static void daem()
 {
 	acoral_thread_t *thread;
 	acoral_list_t *head, *tmp, *tmp1;
-	head = &acoral_res_release_queue;
+	head = &daem_res_release_queue;
 	while (1)
 	{
 		for (tmp = head->next; tmp != head;)
@@ -95,7 +94,10 @@ static void daem()
 			if (thread->state == ACORAL_THREAD_STATE_RELEASE)
 			{
 				ACORAL_LOG_INFO("Daem is Cleaning Thread: %s",thread->name);
-				acoral_release_thread((acoral_res_t *)thread);
+				acoral_list_del(&thread->global_list);
+				system_policy_thread_release(thread);
+  				acoral_free((void *)thread->stack_buttom);
+				acoral_release_res((acoral_res_t *)thread);
 			}
 			else
 			{
@@ -115,10 +117,10 @@ static void daem()
  */
 static void module_init()
 {
-	acoral_intr_sys_init();
-	acoral_mem_sys_init();
-	acoral_thread_sys_init();
-	acoral_evt_sys_init();
+	system_intr_module_init();
+	system_mem_module_init();
+	system_thread_module_init();
+	system_evt_module_init();
 }
 
 /**
@@ -133,7 +135,7 @@ static void main_cpu_start()
 	data.prio = ACORAL_IDLE_PRIO;
 	data.prio_type = ACORAL_HARD_PRIO;
 	idle_id = acoral_create_thread(idle, IDLE_STACK_SIZE, NULL, "idle", NULL, ACORAL_SCHED_POLICY_COMM, &data);
-	if (idle_id == -1)
+	if (idle_id == -1) //SPG 不一定是-1才有问题吧
 	{
 		ACORAL_LOG_ERROR("Create Idle Thread Failed");
 		exit(2);
@@ -158,9 +160,9 @@ static void main_cpu_start()
 	}	
 	printf("%s",logo);
 
-	acoral_sched_locked = false;
-	acoral_need_sched = false; 
-	acoral_set_running_thread(acoral_select_thread());
+	system_sched_locked = false;
+	system_need_sched = false; 
+	system_set_running_thread(acoral_select_thread());
 	HAL_SWITCH_TO(&acoral_cur_thread->stack);
 }
 

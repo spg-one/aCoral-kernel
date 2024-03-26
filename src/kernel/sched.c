@@ -26,9 +26,9 @@
 
 /// aCoral是否需要调度标志，仅当aCoral就绪队列acoral_ready_queues有线程加入或被取下时，该标志被置为true；
 /// 当发生调度之后，该标志位被置为false，直到又有新的线程被就绪或者挂起
-unsigned char acoral_need_sched; 
+unsigned char system_need_sched; 
 
-unsigned char acoral_sched_locked = true;	 ///< aCoral初始化完成之前，调度都是被上锁的，即不允许调度。
+unsigned char system_sched_locked = true;	 ///< aCoral初始化完成之前，调度都是被上锁的，即不允许调度。
 acoral_thread_t *acoral_cur_thread;		///<acoral当前运行的线程
 
 acoral_rdy_queue_t acoral_ready_queues; ///<aCoral就绪队列
@@ -45,7 +45,7 @@ void acoral_prio_queue_add(acoral_rdy_queue_t *array, unsigned char prio, acoral
 	queue = array->queue + prio;
 	head = queue;
 	acoral_list_add2_tail(list, head);
-	acoral_set_bit(prio, array->bitmap);
+	acoral_set_bit_in_bitmap(prio, array->bitmap);
 }
 
 void acoral_prio_queue_del(acoral_rdy_queue_t *array, unsigned char prio, acoral_list_t *list)
@@ -57,12 +57,12 @@ void acoral_prio_queue_del(acoral_rdy_queue_t *array, unsigned char prio, acoral
 	array->num--;
 	acoral_list_del(list);
 	if (acoral_list_empty(head))
-		acoral_clear_bit(prio, array->bitmap);
+		acoral_clear_bit_in_bitmap(prio, array->bitmap);
 }
 
 unsigned int acoral_get_highprio(acoral_rdy_queue_t *array)
 {
-	return acoral_find_first_bit(array->bitmap, PRIO_BITMAP_SIZE);
+	return acoral_find_first_bit_in_array(array->bitmap, PRIO_BITMAP_SIZE);
 }
 
 void acoral_prio_queue_init(acoral_rdy_queue_t *array)
@@ -82,7 +82,7 @@ void acoral_prio_queue_init(acoral_rdy_queue_t *array)
 }
 
 
-void acoral_set_running_thread(acoral_thread_t *thread)
+void system_set_running_thread(acoral_thread_t *thread)
 {
 	acoral_cur_thread->state &= ~ACORAL_THREAD_STATE_RUNNING;
 	thread->state |= ACORAL_THREAD_STATE_RUNNING;
@@ -105,7 +105,7 @@ void acoral_rdyqueue_add(acoral_thread_t *thread)
 	acoral_prio_queue_add(rdy_queue, thread->prio, &thread->ready);
 	thread->state &= ~ACORAL_THREAD_STATE_SUSPEND;
 	thread->state |= ACORAL_THREAD_STATE_READY;
-	acoral_need_sched = true;
+	system_need_sched = true;
 }
 
 void acoral_rdyqueue_del(acoral_thread_t *thread)
@@ -117,19 +117,19 @@ void acoral_rdyqueue_del(acoral_thread_t *thread)
 	thread->state &= ~ACORAL_THREAD_STATE_RUNNING;
 	thread->state |= ACORAL_THREAD_STATE_SUSPEND;
 	/*设置线程所在的核可调度*/
-	acoral_need_sched = true;
+	system_need_sched = true;
 }
 
 void acoral_sched()
 {
 	/*如果不需要调度，则返回*/
-	if (!acoral_need_sched)
+	if (!system_need_sched)
 		return;
 
 	if (acoral_intr_nesting)
 		return;
 
-	if (acoral_sched_locked)
+	if (system_sched_locked)
 		return;
 		
 	/*这个函数进行简单处理后会直接或间接调用acoral_real_sched,或者acoral_real_intr_sched*/
@@ -140,13 +140,13 @@ void acoral_real_sched()
 {
 	acoral_thread_t *prev;
 	acoral_thread_t *next;
-	acoral_need_sched = false;
+	system_need_sched = false;
 	prev = acoral_cur_thread;
 	/*选择最高优先级线程*/
 	next = acoral_select_thread();
 	if (prev != next)
 	{
-		acoral_set_running_thread(next);
+		system_set_running_thread(next);
 		ACORAL_LOG_TRACE("Switch to Thread: %s",acoral_cur_thread->name);
 		if (prev->state == ACORAL_THREAD_STATE_EXIT)
 		{
@@ -163,13 +163,13 @@ unsigned long acoral_real_intr_sched(unsigned long old_sp)
 {
 	acoral_thread_t *prev;
 	acoral_thread_t *next;
-	acoral_need_sched = false;
+	system_need_sched = false;
 	prev = acoral_cur_thread;
 	/*选择最高优先级线程*/
 	next = acoral_select_thread();
 	if (prev != next)
 	{
-		acoral_set_running_thread(next);
+		system_set_running_thread(next);
 		// ACORAL_LOG_TRACE("Switch to Thread: %s\n",acoral_cur_thread->name);
 		if (prev->state == ACORAL_THREAD_STATE_EXIT)
 		{

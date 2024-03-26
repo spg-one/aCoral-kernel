@@ -62,7 +62,7 @@ void acoral_ticks_entry(){
 	timeout_delay_deal();
 }
 
-int acoral_ticks_init(){
+int system_ticks_init(){
 	ticks=0;    	/*初始化滴答时钟计数器*/
 	return hal_timer_init(CFG_TICKS_PER_SEC, acoral_ticks_entry, NULL);
 }
