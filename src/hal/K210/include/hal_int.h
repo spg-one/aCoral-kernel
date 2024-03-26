@@ -16,10 +16,24 @@
 #ifndef HAL_INT_H
 #define HAL_INT_H
 
-#define HAL_INTR_ENABLE()     asm volatile  ( "csrsi mstatus,8" ) //TODO 不应该是直接关中断，而应该保存线程的中断状态后，再关
-#define HAL_INTR_DISABLE()    asm volatile  ( "csrci mstatus,8" ) //TODO 不应该直接开，而是应该恢复线程之前的中断状态
+#include "encoding.h"
+
+#define HAL_INTR_ENABLE()     hal_intr_enable()
+#define HAL_INTR_DISABLE()    hal_intr_disable()
 
 extern int acoral_intr_nesting;
+
+/**
+ * @brief 开启全局中断
+ * 
+ */
+void hal_intr_enable();
+
+/**
+ * @brief 关闭全局中断
+ * 
+ */
+void hal_intr_disable();
 
 /**
  * @brief 使能中断。通过向中断屏蔽（INTMSK）寄存器某位写入0来打开相应中断，对中断复用进行了合并处理
@@ -75,10 +89,13 @@ unsigned long hal_intr_exit_bridge_comm(unsigned long old_sp);
 
 #define HAL_INTR_NESTING_DEC()    hal_intr_nesting_dec_comm()
 #define HAL_INTR_NESTING_INC()    hal_intr_nesting_inc_comm()
-#define HAL_ENTER_CRITICAL()  HAL_INTR_DISABLE()
-#define HAL_EXIT_CRITICAL()  HAL_INTR_ENABLE()
+
 #define HAL_INTR_ATTACH(vecotr,isr) //TODO 该写什么？
 #define HAL_SCHED_BRIDGE() hal_sched_bridge_comm() //SPGcommon指的是老版本的acoral中，有stm32的版本，但是stm32的调度被放在pendsv中，比较特殊，所有这里封装了一层接口，除了stm32其他的实现称为common
 #define HAL_INTR_EXIT_BRIDGE(sp) hal_intr_exit_bridge_comm(sp)
+
+#define HAL_ENTER_CRITICAL() hal_enter_critical()
+#define HAL_EXIT_CRITICAL() hal_exit_critical()
+
 
 #endif

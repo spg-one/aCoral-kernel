@@ -1,5 +1,6 @@
 #include "./include/hal_timer.h"
 #include "autocfg.h"
+
 #include "clint.h"
 
 int hal_timer_init(int ticks_per_sec, void (*ticks_entry)(void *args), void *args){

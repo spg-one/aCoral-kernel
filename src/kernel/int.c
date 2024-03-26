@@ -21,9 +21,6 @@
 
 void acoral_intr_sys_init()
 {
-	/*关中断*/
-	acoral_intr_disable();
-
 	/*中断底层初始化函数*/
 	plic_init();
 }

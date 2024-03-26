@@ -17,8 +17,11 @@
 #include "lsched.h"
 #include <stdint.h>
 
+#include "sysctl.h"
+
 ///中断嵌套数。大于0表示正在中断中。大于1表示中断层数不止一层，即中断嵌套。
 int acoral_intr_nesting = 0;
+unsigned long pre_mstatus_MIE; //SPG 多核的话要扩展成数组，因为每个核有自己的mstatus
 
 void hal_intr_unmask(int vector)
 {
@@ -59,4 +62,21 @@ unsigned long hal_intr_exit_bridge_comm(unsigned long old_sp)
 	unsigned long next_sp = acoral_real_intr_sched(old_sp);
 	HAL_EXIT_CRITICAL();
 	return next_sp;
+}
+
+void hal_intr_enable(){
+	sysctl_enable_irq();
+}
+
+void hal_intr_disable(){
+	sysctl_disable_irq();
+}
+
+void hal_enter_critical(){
+    pre_mstatus_MIE = read_csr(mstatus) & MSTATUS_MIE; 
+    hal_intr_disable();                          
+}
+
+void hal_exit_critical(){
+	write_csr(mstatus,read_csr(mstatus) | pre_mstatus_MIE); 
 }

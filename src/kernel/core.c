@@ -1,16 +1,10 @@
 /**
  * @file core.c
  * @author 王彬浩 (SPGGOGOGO@outlook.com)
- * @brief kernel层，aCoral内核初始化文件，紧接start.S
- * @version 1.0
- * @date 2022-07-04
- * @copyright Copyright (c) 2023
- * @revisionHistory
- *  <table>
- *   <tr><th> 版本 <th>作者 <th>日期 <th>修改内容
- *   <tr><td> 0.1 <td>jivin <td>2010-03-08 <td>Created
- *   <tr><td> 1.0 <td>王彬浩 <td> 2022-07-04 <td>Standardized
- *  </table>
+ * @brief aCoral内核初始化
+ * @version 2.0
+ * @date 2024-03-26
+ * @copyright Copyright (c) 2024
  */
 #include "kernel.h"
 
@@ -52,6 +46,7 @@ static void idle()
  */
 static void init()
 {
+	acoral_intr_disable();
 	ACORAL_LOG_TRACE("Init Thread Start");
 
 	acoral_init_list(&time_delay_queue);
@@ -63,7 +58,7 @@ static void init()
 		exit(1);
 	}
 	ACORAL_LOG_TRACE("Ticks Init Done");
-	
+	acoral_intr_enable();
 	acoral_start_sched = true;
 
 	/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/
@@ -72,6 +67,7 @@ static void init()
 #endif
 	user_main();
 	ACORAL_LOG_TRACE("Init Thread Done");
+	
 }
 
 /**
@@ -116,7 +112,7 @@ static void daem()
  * @brief aCoral内核各模块初始化
  * 
  */
-static void acoral_module_init()
+static void module_init()
 {
 	acoral_intr_sys_init();
 	acoral_mem_sys_init();
@@ -168,11 +164,15 @@ static void acoral_main_cpu_start()
 	HAL_SWITCH_TO(&acoral_cur_thread->stack);
 }
 
-void acoral_start()
-{//SPG 第一步应该关中断，在init线程结束时再打开。又因为init线程初始化完成后，默认是打开中断的（mstatus.MIE=1），所以应该先把MIE清除，init结束时再打开。init里面会打开timer的中断（mie.MTIE）,而mie.MEIE一直都是1.
+void system_start()
+{
+	/* 关中断，在init线程中打开 */
+	acoral_intr_disable();
+
 	ACORAL_LOG_DEBUG("Build at %s %s",__DATE__,__TIME__);
+
 	ACORAL_LOG_TRACE("Kernel Module Init Start");
-	acoral_module_init();
+	module_init();
 	ACORAL_LOG_TRACE("Kernel Module Init Done");
 
 	acoral_main_cpu_start();
