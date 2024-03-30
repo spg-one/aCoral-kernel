@@ -36,7 +36,6 @@ typedef struct{
 }acoral_evt_t;
 
 void system_evt_module_init(void);
-void acoral_evt_pool_init(void);
 acoral_evt_t *acoral_alloc_evt(void);
 void acoral_evt_init(acoral_evt_t *evt);
 _Bool acoral_evt_queue_empty(acoral_evt_t *evt);

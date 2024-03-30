@@ -32,5 +32,6 @@
 #include "message.h"
 #include "dag.h"
 #include "log.h"
+#include "resource.h"
 
 #endif /* KERNEL_H_ */

@@ -498,13 +498,12 @@ void buddy_free(void *ptr)
 
 /*资源池部分*/
 
-/// aCoral资源池数组，总共有ACORAL_MAX_POOLS=40个
-acoral_pool_t acoral_pools[ACORAL_MAX_POOLS];
+
 
 /// aCoral空闲资源池指针
 acoral_pool_t *acoral_free_res_pool;
 
-unsigned int acoral_create_pool(acoral_pool_ctrl_t *pool_ctrl)
+unsigned int acoral_create_pool(acoral_res_pool_ctrl_t *pool_ctrl)
 {
 	acoral_pool_t *pool;
 	if (pool_ctrl->num >= pool_ctrl->max_pools)
@@ -520,7 +519,6 @@ unsigned int acoral_create_pool(acoral_pool_ctrl_t *pool_ctrl)
 		return ACORAL_RES_NO_MEM;
 	pool->res_free = pool->base_adr;
 	pool->free_num = pool->num;
-	pool->ctrl = pool_ctrl;
 	acoral_pool_res_init(pool);
 	acoral_list_add2_tail(&pool->ctrl_list, pool_ctrl->pools);
 	acoral_list_add2_tail(&pool->free_list, pool_ctrl->free_pools);
@@ -528,7 +526,7 @@ unsigned int acoral_create_pool(acoral_pool_ctrl_t *pool_ctrl)
 	return 0;
 }
 
-void acoral_release_pool(acoral_pool_ctrl_t *pool_ctrl)
+void acoral_release_pool(acoral_res_pool_ctrl_t *pool_ctrl)
 {
 	acoral_pool_t *pool;
 	acoral_list_t *list, *head;
@@ -542,12 +540,14 @@ void acoral_release_pool(acoral_pool_ctrl_t *pool_ctrl)
 		acoral_list_del(&pool->free_list);
 		acoral_free(pool->base_adr);
 		pool->base_adr = (void *)acoral_free_res_pool;
+
+		/* 清除清除31到10位的内容，即该资源池的类型acoralResourceTypeEnum,只保留低9位的内容，即该资源池的在acoral_pools的编号 */
 		pool->id = pool->id & ACORAL_POOL_INDEX_MASK;
 		acoral_free_res_pool = pool;
 	}
 }
 
-acoral_res_t *acoral_get_res(acoral_pool_ctrl_t *pool_ctrl)
+acoral_res_t *acoral_get_res(acoral_res_pool_ctrl_t *pool_ctrl)
 {
 	acoral_list_t *first;
 	acoral_res_t *res;
@@ -569,7 +569,9 @@ acoral_res_t *acoral_get_res(acoral_pool_ctrl_t *pool_ctrl)
 	pool = list_entry(first, acoral_pool_t, free_list);
 	res = (acoral_res_t *)pool->res_free;
 	pool->res_free = (void *)((unsigned char *)pool->base_adr + res->next_id * pool->size);
-	res->id = (res->id >> (ACORAL_RES_INDEX_INIT_BIT - ACORAL_RES_INDEX_BIT)) & ACORAL_RES_INDEX_MASK | pool->id;
+
+	/* 修改被获取的资源的id，原本没被获取时，id第16位表示该资源在池内的编号，现在改到第14位//SPG这是为什么 */
+	res->id = res->id & ACORAL_RES_INDEX_MASK | pool->id;
 	pool->free_num--;
 	if (!pool->free_num)
 	{
@@ -584,7 +586,7 @@ void acoral_release_res(acoral_res_t *res)
 	acoral_pool_t *pool;
 	unsigned int index;
 	void *tmp;
-	acoral_pool_ctrl_t *pool_ctrl;
+	acoral_res_pool_ctrl_t *pool_ctrl;
 	if (res == NULL || acoral_get_res_by_id(res->id) != res)
 	{
 		return;
@@ -592,10 +594,10 @@ void acoral_release_res(acoral_res_t *res)
 	pool = acoral_get_pool_by_id(res->id);
 	if (pool == NULL)
 	{
-		printf("Res release Err\n"); // TODO 删printerr
+		printf("Res release Err\n");
 		return;
 	}
-	pool_ctrl = pool->ctrl;
+	pool_ctrl = &(acoral_res_pool_ctrl_container[pool->ctrl_type]);
 	if ((void *)res < pool->base_adr)
 	{
 		printf("Err Res\n");
@@ -609,8 +611,8 @@ void acoral_release_res(acoral_res_t *res)
 	}
 	tmp = pool->res_free;
 	pool->res_free = (void *)res;
-	res->id = index << ACORAL_RES_INDEX_INIT_BIT;
-	res->next_id = ((acoral_res_t *)tmp)->id >> ACORAL_RES_INDEX_INIT_BIT;
+	res->id = index << ACORAL_RES_INDEX_BIT;
+	res->next_id = ((acoral_res_t *)tmp)->id >> ACORAL_RES_INDEX_BIT;
 	pool->free_num++;
 	if (acoral_list_empty(&pool->free_list))
 		acoral_list_add(&pool->free_list, pool_ctrl->free_pools);
@@ -620,9 +622,12 @@ void acoral_release_res(acoral_res_t *res)
 acoral_pool_t *acoral_get_pool_by_id(int res_id)
 {
 	unsigned int index;
-	index = (res_id & ACORAL_POOL_INDEX_MASK) >> ACORAL_POOL_INDEX_BIT;
-	if (index < ACORAL_MAX_POOLS)
-		return acoral_pools + index;
+	index = res_id & ACORAL_POOL_INDEX_MASK;
+	if (index < CFG_MAX_RES_POOLS)
+	{
+		return acoral_res_pools + index;
+	}
+		
 	return NULL;
 }
 
@@ -661,16 +666,16 @@ void acoral_pool_res_init(acoral_pool_t *pool)
 	pblk = (unsigned char *)pool->base_adr + pool->size;
 	for (i = 0; i < (blks - 1); i++)
 	{
-		res->id = i << ACORAL_RES_INDEX_INIT_BIT;
+		res->id = i << ACORAL_RES_INDEX_BIT;
 		res->next_id = i + 1;
 		res = (acoral_res_t *)pblk;
 		pblk += pool->size;
 	}
-	res->id = blks - 1 << ACORAL_RES_INDEX_INIT_BIT;
+	res->id = (blks - 1) << ACORAL_RES_INDEX_BIT; //SPG 括号是我加的，原本是没括号的，但是不对吧
 	res->next_id = 0;
 }
 
-void acoral_pool_ctrl_init(acoral_pool_ctrl_t *pool_ctrl)
+void acoral_pool_ctrl_init(acoral_res_pool_ctrl_t *pool_ctrl)
 {
 	unsigned int size;
 	pool_ctrl->free_pools = &pool_ctrl->list[0];
@@ -695,15 +700,15 @@ void acoral_res_sys_init()
 {
 	acoral_pool_t *pool;
 	unsigned int i;
-	pool = &acoral_pools[0];
-	for (i = 0; i < (ACORAL_MAX_POOLS - 1); i++)
+	pool = &acoral_res_pools[0];
+	for (i = 0; i < (CFG_MAX_RES_POOLS - 1); i++)
 	{
-		pool->base_adr = (void *)&acoral_pools[i + 1];
+		pool->base_adr = (void *)&acoral_res_pools[i + 1];
 		pool->id = i;
 		pool++;
 	}
 	pool->base_adr = (void *)0;
-	acoral_free_res_pool = &acoral_pools[0];
+	acoral_free_res_pool = &acoral_res_pools[0];
 }
 
 //SPG原malloc.c

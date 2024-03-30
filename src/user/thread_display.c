@@ -10,12 +10,13 @@ void display_thread(int argc,char **argv){
 	head=&acoral_threads_queue;
 	printf("\t\tSystem Thread Information\r\n");
 	printf("------------------------------------------------------\r\n");
-	printf("Name\t\tType\t\tState\t\tPrio\r\n");
+	printf("Name\t\tid\t\tType\t\tState\t\tPrio\r\n");
 	HAL_ENTER_CRITICAL();
 
 	for(tmp=head->next;tmp!=head;tmp=tmp->next){
 		thread=list_entry(tmp,acoral_thread_t,global_list);
 		printf("%s\t\t",thread->name);
+		printf("%d\t\t",thread->res.id);
 		switch(thread->policy){
 			case ACORAL_SCHED_POLICY_COMM:
 				printf("Common\t\t");

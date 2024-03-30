@@ -18,30 +18,21 @@
 #include "message.h"
 #include "thread.h"
 #include "list.h"
+#include "resource.h"
+
 #include <stdio.h>
 
-acoral_pool_ctrl_t acoral_evt_pool_ctrl;
 void system_evt_module_init()
 {
-	acoral_evt_pool_init();
-}
-
-void acoral_evt_pool_init()
-{
-	acoral_evt_pool_ctrl.type = ACORAL_RES_EVENT;
-	acoral_evt_pool_ctrl.size = sizeof(acoral_evt_t);
-	acoral_evt_pool_ctrl.num_per_pool = 8;
-	acoral_evt_pool_ctrl.num = 0;
-	acoral_evt_pool_ctrl.max_pools = 4;
-	acoral_pool_ctrl_init(&acoral_evt_pool_ctrl);
-#ifdef CFG_MSG
+	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_EVENT]);
+#if CFG_MSG
 	acoral_msg_sys_init();
 #endif
 }
 
 acoral_evt_t *acoral_alloc_evt()
 {
-	return (acoral_evt_t *)acoral_get_res(&acoral_evt_pool_ctrl);
+	return (acoral_evt_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_EVENT]);
 }
 
 void acoral_evt_init(acoral_evt_t *evt)

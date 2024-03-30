@@ -42,7 +42,11 @@ typedef enum{
 /*
  ***************************** kernel configuration *****************************
  */
-#define CFG_MEM2 1 ///<任意大小内存分配系统是否启用
+///最大不超过1023
+#define CFG_MAX_RES_POOLS 40
+
+///任意大小内存分配系统是否启用
+#define CFG_MEM2 1 
 #define CFG_MEM2_SIZE (102400) ///<任意大小内存分配系统的大小，是从伙伴系统管理的堆内存中拿出一部分
 
 #define CFG_THRD_PERIOD 1
@@ -58,10 +62,13 @@ typedef enum{
 #define CFG_MIN_STACK_SIZE (10240) ///<线程最小拥有10240字节的栈
 
 #define CFG_EVT_SEM 1
+#define CFG_EVT_MUTEX 1
 
-#define CFG_MSG 1
+#define CFG_MSG 1 ///<1：启用消息队列 ，0：关闭消息队列
 
 #define CFG_TICKS_PER_SEC (100) ///<acoral每秒的ticks数
+
+
 
 /*
  * User configuration

@@ -72,17 +72,22 @@ typedef struct acoral_thread_tcb{//SPG加注释
 	acoralThreadStateEnum state;
 	unsigned char prio;
 	acoralSchedPolicyEnum policy;
+
 	acoral_list_t ready;	///<用于挂载到全局就绪队列
 	acoral_list_t timeout;
-	acoral_list_t waiting;
+	acoral_list_t waiting; //SPG 
 	acoral_list_t global_list;
+#if	CFG_THRD_PERIOD
+	acoral_list_t period_wait; ///<周期等待队列
+#endif
+
 	acoral_evt_t* evt;
 	unsigned int *stack; ///<高地址
 	unsigned int *stack_buttom;	///<低地址
 	unsigned int stack_size;
+
 	int delay;
 	char *name;
-	int console_id; ///<deprecated
 	void*	private_data;
 	void*	data;
 }acoral_thread_t;

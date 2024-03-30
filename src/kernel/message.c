@@ -20,38 +20,30 @@
 #include "int.h"
 #include "timer.h"
 #include "message.h"
+#include "resource.h"
+
 #include <stdio.h>
 
-acoral_pool_ctrl_t acoral_msgctr_pool_ctrl;
-acoral_pool_ctrl_t acoral_msg_pool_ctrl;
 acoral_list_t g_msgctr_header; ///< 全局-用来串系统中所有的acoral_msgctr_t块，在中断函数中处理ttl和timeout，create acoral_msgctr_t 时加到该链表中
 
 void acoral_msg_sys_init()
 {
 	/*初始化全局事件列表头*/
 	acoral_init_list(&(g_msgctr_header));
-	acoral_msgctr_pool_ctrl.type = ACORAL_RES_MST;
-	acoral_msgctr_pool_ctrl.size = sizeof(acoral_msgctr_t);
-	acoral_msgctr_pool_ctrl.num_per_pool = 10;
-	acoral_msgctr_pool_ctrl.max_pools = 4;
 
-	acoral_msg_pool_ctrl.type = ACORAL_RES_MSG;
-	acoral_msg_pool_ctrl.size = sizeof(acoral_msg_t);
-	acoral_msg_pool_ctrl.num_per_pool = 10;
-	acoral_msg_pool_ctrl.max_pools = 4;
 
-	acoral_pool_ctrl_init(&acoral_msgctr_pool_ctrl);
-	acoral_pool_ctrl_init(&acoral_msg_pool_ctrl);
+	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MST]);
+	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MSG]);
 }
 
 acoral_msgctr_t *acoral_alloc_msgctr()
 {
-	return (acoral_msgctr_t *)acoral_get_res(&acoral_msgctr_pool_ctrl);
+	return (acoral_msgctr_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_MST]);
 }
 
 acoral_msg_t *acoral_alloc_msg()
 {
-	return (acoral_msg_t *)acoral_get_res(&acoral_msg_pool_ctrl);
+	return (acoral_msg_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_MSG]);
 }
 
 void acoral_msgctr_queue_add(acoral_msgctr_t *msgctr,

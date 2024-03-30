@@ -20,12 +20,13 @@
 #include "thread.h"
 #include "int.h"
 #include "policy.h"
+#include "resource.h"
+
 #include <stdio.h>
 
 extern acoral_list_t daem_res_release_queue;
 extern void acoral_evt_queue_del(acoral_thread_t *thread);
 acoral_list_t acoral_threads_queue; ///<aCoral全局所有线程队列
-acoral_pool_ctrl_t acoral_thread_pool_ctrl;
 
 int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void *args,char *name,void *stack,acoralSchedPolicyEnum sched_policy,void *data){
 	acoral_thread_t *thread;
@@ -197,7 +198,7 @@ void acoral_thread_move2_tail_by_id(int thread_id){
 }
 
 acoral_thread_t *acoral_alloc_thread(){
-  	return (acoral_thread_t *)acoral_get_res(&acoral_thread_pool_ctrl);
+  	return (acoral_thread_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_THREAD]);
 }
 
 unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args){
@@ -227,15 +228,8 @@ unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args
 	return 0;
 }
 
-void acoral_thread_pool_init(){
-	acoral_thread_pool_ctrl.type=ACORAL_RES_THREAD;
-	acoral_thread_pool_ctrl.size=sizeof(acoral_thread_t);
-	if(CFG_MAX_THREAD>20)
-		acoral_thread_pool_ctrl.num_per_pool=20;
-	else
-		acoral_thread_pool_ctrl.num_per_pool=CFG_MAX_THREAD;
-	acoral_thread_pool_ctrl.max_pools=CFG_MAX_THREAD/acoral_thread_pool_ctrl.num_per_pool;
-	acoral_pool_ctrl_init(&acoral_thread_pool_ctrl);
+void acoral_thread_pool_init(){//SPG 这个函数打开？
+	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_THREAD]);
 }
 
 void acoral_sched_mechanism_init(){

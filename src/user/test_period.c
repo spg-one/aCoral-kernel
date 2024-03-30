@@ -3,10 +3,10 @@
 #include <assert.h>
 
 void p1(){
-    printf("in p1.. %s\n",__FILE__);
-    int i = 0;
+    printf("in p1..\n");
+    static int i = 0;
     i++;
-    printf("out p1..\n");
+    printf("i = %d , out p1..\n",i);
     return;
 }
 
