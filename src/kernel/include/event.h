@@ -35,8 +35,8 @@ typedef struct{
 	void*		  data; 		///<当event是mutex或Semaphore时，指向占用线程，当event是消息队列时，存放传递的消息
 }acoral_evt_t;
 
-void system_evt_module_init(void);
-acoral_evt_t *acoral_alloc_evt(void);
+void system_ipc_module_init(void);
+
 void acoral_evt_init(acoral_evt_t *evt);
 _Bool acoral_evt_queue_empty(acoral_evt_t *evt);
 

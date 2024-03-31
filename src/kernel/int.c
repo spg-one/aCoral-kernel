@@ -22,7 +22,7 @@
 void system_intr_module_init()
 {
 	/*中断底层初始化函数*/
-	plic_init();
+	hal_intr_init();
 }
 
 int acoral_intr_attach(int vector,void (*isr)(int)){

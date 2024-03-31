@@ -31,7 +31,7 @@ acoral_list_t acoral_threads_queue; ///<aCoral全局所有线程队列
 int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void *args,char *name,void *stack,acoralSchedPolicyEnum sched_policy,void *data){
 	acoral_thread_t *thread;
         /*分配tcb数据块*/
-	thread=acoral_alloc_thread();
+	thread = (acoral_thread_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_THREAD]);
 	if(NULL==thread){
 		printf("Alloc thread:%s fail\n",name);
 		printf("No Mem Space or Beyond the max thread\n");
@@ -195,10 +195,6 @@ void acoral_thread_move2_tail(acoral_thread_t *thread){
 void acoral_thread_move2_tail_by_id(int thread_id){
 	acoral_thread_t *thread=(acoral_thread_t *)acoral_get_res_by_id(thread_id);
 	acoral_thread_move2_tail(thread);
-}
-
-acoral_thread_t *acoral_alloc_thread(){
-  	return (acoral_thread_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_THREAD]);
 }
 
 unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args){

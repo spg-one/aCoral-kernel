@@ -107,7 +107,7 @@ void acoral_suspend_thread(acoral_thread_t *thread);
 void acoral_resume_thread(acoral_thread_t *thread);
 void acoral_kill_thread(acoral_thread_t *thread);
 unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args);
-acoral_thread_t *acoral_alloc_thread(void);
+
 void acoral_thread_pool_init(void);
 void system_thread_module_init(void);
 void acoral_unrdy_thread(acoral_thread_t *thread);

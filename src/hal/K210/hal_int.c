@@ -23,6 +23,10 @@
 int acoral_intr_nesting = 0;
 unsigned long pre_mstatus_MIE; //SPG 多核的话要扩展成数组，因为每个核有自己的mstatus
 
+void hal_intr_init(){
+    plic_init();
+}
+
 void hal_intr_unmask(int vector)
 {
 	// TODO riscv-加上

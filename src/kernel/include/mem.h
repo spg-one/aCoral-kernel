@@ -142,25 +142,6 @@ typedef struct{
 }acoral_block_ctr_t;
 
 /**
- * 资源系统部分
-*/
-
-#define ACORAL_RES_TYPE(id) ((id&ACORAL_RES_TYPE_MASK)>>ACORAL_RES_TYPE_BIT) ///<根据资源ID获取某一资源数据块
-
-/**
- * @brief id虽然是32位的，但实际上只有高16位，因为低16位属于next_id
- *        之所以用union的写法，
- *        1、是为了给id的低16位取个名字叫next_id。提高代码的可读性
- *        2、是为了将id直接作为资源的id，可以整体访问，如果用struct的方式，分段定义id的各个字段，那返回整个struct才是资源的id
- */
-typedef union {
-   int id;     
-   unsigned short next_id; 
-}acoral_res_t;
-
-
-
-/**
  * @brief 内存管理系统初始化
  * @note 初始化两级内存管理系统，第一级为伙伴系统，第二级为任意大小内存分配系统（名字里带"2")和资源池系统
  */
@@ -175,82 +156,6 @@ void system_mem_module_init();
  */
 unsigned int buddy_malloc_size(unsigned int size);
 
-/**
- * @brief 根据资源ID获取某一资源对应的资源池
- *
- * @param res_id 资源ID
- * @return acoral_pool_t* 获取到的资源池指针
- */
-acoral_pool_t *acoral_get_pool_by_id(int id);
 
-/**
- * @brief 获取空闲资源池
- *
- * @return acoral_pool_t* 获取到的空闲资源池指针
- */
-acoral_pool_t *acoral_get_free_pool(void);
-
-
-/**
- * @brief 创建一个某一类型的资源池
- * @note 创建的时机包括系统刚初始化时，以及系统中空闲资源池不够时
- *
- * @param pool_ctrl 某一类型资源池的控制块
- * @return unsigned int 0成功
- */
-unsigned int acoral_create_pool(acoral_res_pool_ctrl_t *pool_ctrl);
-
-/**
- * @brief 释放所有某一类型的资源池
- *
- * @param pool_ctrl 某一类型的资源池控制块
- */
-void acoral_release_pool(acoral_res_pool_ctrl_t *pool_ctrl);
-
-
-/**
- * @brief 从某个资源池中获取一个资源（tcb、event等）
- *
- * @param pool_ctrl 资源池控制块
- * @return acoral_res_t*
- */
-acoral_res_t *acoral_get_res(acoral_res_pool_ctrl_t *pool_ctrl);
-
-/**
- * @brief 释放某一资源
- *
- * @param res 要释放的资源
- */
-void acoral_release_res(acoral_res_t *res);
-
-/**
- * @brief 根据id获取某一资源
- *
- * @param id 资源id
- * @return acoral_res_t* 获取到的资源
- */
-acoral_res_t * acoral_get_res_by_id(int id);
-
-/**
- * @brief 资源池中的资源id和next_id初始化
- *
- * @param pool 指定的资源池
- */
-void acoral_pool_res_init(acoral_pool_t * pool);
-
-/**
- * @brief 资源系统初始化
- * @note link all pools by making every pool's base_adr point to next pool,\
- * 		and then initialize acoral_free_res_pool as the first pool.
- *
- */
-void acoral_res_sys_init(void);
-
-/**
- * @brief 利用资源池控制块对某种类型的资源池进行初始化
- * @note 调用时机为系统启动后，每个子系统（驱动、事件、内存、线程）初始化的时候
- * @param pool_ctrl 每种资源池控制块
- */
-void acoral_pool_ctrl_init(acoral_res_pool_ctrl_t *pool_ctrl);
 
 #endif

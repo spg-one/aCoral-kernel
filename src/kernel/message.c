@@ -24,26 +24,10 @@
 
 #include <stdio.h>
 
-acoral_list_t g_msgctr_header; ///< 全局-用来串系统中所有的acoral_msgctr_t块，在中断函数中处理ttl和timeout，create acoral_msgctr_t 时加到该链表中
-
 void acoral_msg_sys_init()
 {
-	/*初始化全局事件列表头*/
-	acoral_init_list(&(g_msgctr_header));
-
-
 	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MST]);
 	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MSG]);
-}
-
-acoral_msgctr_t *acoral_alloc_msgctr()
-{
-	return (acoral_msgctr_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_MST]);
-}
-
-acoral_msg_t *acoral_alloc_msg()
-{
-	return (acoral_msg_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_MSG]);
 }
 
 void acoral_msgctr_queue_add(acoral_msgctr_t *msgctr,
@@ -68,7 +52,7 @@ acoral_msgctr_t *acoral_msgctr_create()
 {
 	acoral_msgctr_t *msgctr;
 
-	msgctr = acoral_alloc_msgctr();
+	msgctr = (acoral_msgctr_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_MST]);
 
 	if (msgctr == NULL)
 		return NULL;
@@ -81,7 +65,6 @@ acoral_msgctr_t *acoral_msgctr_create()
 	acoral_init_list(&msgctr->msglist);
 	acoral_init_list(&msgctr->waiting);
 
-	acoral_list_add2_tail(&msgctr->msgctr_list, &(g_msgctr_header));
 	return msgctr;
 }
 
@@ -91,7 +74,7 @@ acoral_msg_t *acoral_msg_create(
 {
 	acoral_msg_t *msg;
 
-	msg = acoral_alloc_msg();
+	msg = (acoral_msg_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_MSG]);
 
 	if (msg == NULL)
 		return NULL;

@@ -42,7 +42,7 @@ acoralSemRetValEnum acoral_sem_init(acoral_evt_t *evt, unsigned int semNum)
 acoral_evt_t *acoral_sem_create(unsigned int semNum)
 {
 	acoral_evt_t *evt;
-	evt = acoral_alloc_evt();
+	evt = (acoral_evt_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_EVENT]);
 	if (NULL == evt)
 	{
 		return NULL;

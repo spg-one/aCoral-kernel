@@ -23,6 +23,8 @@
 
 extern int acoral_intr_nesting;
 
+void hal_intr_init();
+
 /**
  * @brief 开启全局中断
  * 

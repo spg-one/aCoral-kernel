@@ -70,8 +70,8 @@ typedef struct
 } acoral_msg_t;
 
 void acoral_msg_sys_init(void);
-acoral_msgctr_t *acoral_alloc_msgctr(void);
-acoral_msg_t *acoral_alloc_msg(void);
+
+
 
 /**
  * @brief 唤醒最高优先等待线程

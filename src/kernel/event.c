@@ -22,17 +22,12 @@
 
 #include <stdio.h>
 
-void system_evt_module_init()
+void system_ipc_module_init()
 {
 	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_EVENT]);
 #if CFG_MSG
 	acoral_msg_sys_init();
 #endif
-}
-
-acoral_evt_t *acoral_alloc_evt()
-{
-	return (acoral_evt_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_EVENT]);
 }
 
 void acoral_evt_init(acoral_evt_t *evt)

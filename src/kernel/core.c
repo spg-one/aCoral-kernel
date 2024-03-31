@@ -120,7 +120,7 @@ static void module_init()
 	system_intr_module_init();
 	system_mem_module_init();
 	system_thread_module_init();
-	system_evt_module_init();
+	system_ipc_module_init();
 }
 
 /**
