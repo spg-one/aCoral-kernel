@@ -45,7 +45,7 @@ acoral_evt_t *acoral_mutex_create(unsigned char prio, unsigned int *err) // SPG�
 	acoral_evt_t *evt;
 
 	/* 是否大于最小优先线，和是否该优先级已占用*/
-	evt = (acoral_evt_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_EVENT]); /* alloc a RAM for the event*/
+	evt = (acoral_evt_t *)acoral_get_res(ACORAL_RES_EVENT); /* alloc a RAM for the event*/
 	if (NULL == evt)
 	{
 		*err = MUTEX_ERR_NULL;

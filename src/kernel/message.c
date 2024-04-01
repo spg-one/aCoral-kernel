@@ -24,12 +24,6 @@
 
 #include <stdio.h>
 
-void acoral_msg_sys_init()
-{
-	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MST]);
-	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MSG]);
-}
-
 void acoral_msgctr_queue_add(acoral_msgctr_t *msgctr,
 							 acoral_thread_t *thread)
 { /*需按优先级排序*/
@@ -52,7 +46,7 @@ acoral_msgctr_t *acoral_msgctr_create()
 {
 	acoral_msgctr_t *msgctr;
 
-	msgctr = (acoral_msgctr_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_MST]);
+	msgctr = (acoral_msgctr_t *)acoral_get_res(ACORAL_RES_MST);
 
 	if (msgctr == NULL)
 		return NULL;
@@ -74,7 +68,7 @@ acoral_msg_t *acoral_msg_create(
 {
 	acoral_msg_t *msg;
 
-	msg = (acoral_msg_t *)acoral_get_res(&acoral_res_pool_ctrl_container[ACORAL_RES_MSG]);
+	msg = (acoral_msg_t *)acoral_get_res(ACORAL_RES_MSG);
 
 	if (msg == NULL)
 		return NULL;

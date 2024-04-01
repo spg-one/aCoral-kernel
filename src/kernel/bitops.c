@@ -9,27 +9,57 @@
 
 #include "bitops.h" 
 
-unsigned int acoral_find_first_bit_in_integer(unsigned int word)
+unsigned int acoral_find_first_bit_in_integer(unsigned int word, int bit)
 {
-	unsigned int k = 31;
-	if (word & 0x0000ffff) { k -= 16; word <<= 16; }
-	if (word & 0x00ff0000) { k -= 8;  word <<= 8;  }
-	if (word & 0x0f000000) { k -= 4;  word <<= 4;  }
-	if (word & 0x30000000) { k -= 2;  word <<= 2;  }
-	if (word & 0x40000000) { k -= 1; }
+    if(bit)
+    {
+        if (word == 0) {
+            return -1;  // 特殊情况：所有位都是0
+        }
+        unsigned int k = 31;
+	    if (word & 0x0000ffff) { k -= 16; word <<= 16; }
+	    if (word & 0x00ff0000) { k -= 8;  word <<= 8;  }
+	    if (word & 0x0f000000) { k -= 4;  word <<= 4;  }
+	    if (word & 0x30000000) { k -= 2;  word <<= 2;  }
+	    if (word & 0x40000000) { k -= 1; }
         return k;
+    }
+    else
+    {
+        if (word == 0xFFFFFFFF) {
+            return -1;  // 特殊情况：所有位都是1
+        }
+        unsigned int k = 31;
+	    if ((word & 0x0000ffff) != 0xffff) { k -= 16; word <<= 16; }
+	    if ((word & 0x00ff0000) != 0xff0000) { k -= 8;  word <<= 8;  }
+	    if ((word & 0x0f000000) != 0xf000000) { k -= 4;  word <<= 4;  }
+	    if ((word & 0x30000000) != 0x30000000) { k -= 2;  word <<= 2;  }
+	    if ((word & 0x40000000) != 0x40000000) { k -= 1; }
+        return k;
+    }
+	
 }
 
-unsigned int acoral_find_first_bit_in_array(const unsigned int *b,unsigned int length)
+unsigned int acoral_find_first_bit_in_array(const unsigned int *b,unsigned int length, int bit)
 {
 	unsigned int v;
 	unsigned int off;
 
-	for (off = 0; v = b[off], off < length; off++) {
+    if(bit)
+    {
+       for (off = 0; v = b[off], off < length; off++) {
 		if (v)
 			break;
-	}
-	return acoral_find_first_bit_in_integer(v) + off * 32;
+	    }
+    }else
+    {
+        for (off = 0; v = b[off], off < length; off++) {
+		if (v != 0xffffffff)
+			break;
+	    } 
+    }
+	
+	return acoral_find_first_bit_in_integer(v,bit) + off * 32;
 }
 
 void acoral_set_bit_in_bitmap(int nr,unsigned int *bitmap)

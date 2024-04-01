@@ -16,9 +16,10 @@
  *        bit从低到高排序为 b[0]:bit0 -> b[0]:bit31 -> b[1]:bit[0] -> ... b[length-1]:bit31
  * @param b 整型数组指针
  * @param length 数组长度
+ * @param bit 找0还是1
  * @return int 最低非0bit的位置
  */
-unsigned int acoral_find_first_bit_in_array(const unsigned int *b,unsigned int length);
+unsigned int acoral_find_first_bit_in_array(const unsigned int *b,unsigned int length, int bit);
 
 /**
  * @brief 设置位图中特定位为1
@@ -49,8 +50,9 @@ unsigned int acoral_get_bit_in_bitmap(int nr,unsigned int *bitmap);
  * @brief 二分法查找整型数为1的最低位
  * 
  * @param word 整型数
+ * @param bit 找0还是1
  * @return int 位置
  */
-unsigned int acoral_find_first_bit_in_integer(unsigned int word);
+unsigned int acoral_find_first_bit_in_integer(unsigned int word, int bit);
 
 #endif

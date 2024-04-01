@@ -43,11 +43,10 @@ typedef enum{
 #endif
 
 #if CFG_MSG
-   ACORAL_RES_MSG,
+   ACORAL_RES_MSG, ///<消息
    ACORAL_RES_MST,
 #endif
-
-    ACORAL_RES_UNKNOWN
+    ACORAL_RES_UNKNOWN ///<未分配的资源池
 }acoralResourceTypeEnum;
 
 /**
@@ -75,7 +74,7 @@ typedef union {
  * @brief  资源池
 */
 typedef struct {
-   void *base_adr; ///< 在资源池未被未分配的时,在acoral_res_system.system_free_res_pool数组中指向下一个未被分配的pool；分配后为该资源池管理的资源的基地址
+   void *base_adr; ///< 在资源池未被未分配的时,在acoral_res_system.system_free_res_pool数组中指向下一个未被分配的资源池；分配后为该资源池管理的资源的基地址
    void *res_free; ///< 指向当前资源池中第一个空闲的资源
    int id; ///< bit[13:10]:资源类型；bit[9:0]:在acoral_res_pools中的编号
    unsigned int size; ///< 该资源池中每个资源的大小
@@ -107,7 +106,7 @@ typedef struct {
  */
 typedef struct {
     acoral_pool_t* system_res_pools; ///<系统中所有的资源池
-    acoral_pool_t* system_free_res_pool; ///<系统中未被分配的资源池
+    int system_res_pools_bitmap[(CFG_MAX_RES_POOLS+31)/32]; ///<每一位0代表未分配，1代表已分配
     acoral_res_pool_ctrl_t* system_res_ctrl_container; ///<各类资源池控制块的容器
 }acoral_res_system_t;
 
@@ -122,13 +121,6 @@ extern acoral_pool_t acoral_res_pools[CFG_MAX_RES_POOLS];
  */
 acoral_pool_t *acoral_get_pool_by_id(int id);
 
-/**
- * @brief 从acoral_res_pools获取空闲资源池
- *
- * @return acoral_pool_t* 获取到的空闲资源池指针
- */
-acoral_pool_t *acoral_get_free_pool(void);
-
 
 /**
  * @brief 从某个资源池中获取一个资源（tcb、event等）
@@ -136,7 +128,7 @@ acoral_pool_t *acoral_get_free_pool(void);
  * @param pool_ctrl 资源池控制块
  * @return acoral_res_t* 资源指针
  */
-acoral_res_t *acoral_get_res(acoral_res_pool_ctrl_t *pool_ctrl);
+acoral_res_t *acoral_get_res(acoralResourceTypeEnum res_type);
 
 /**
  * @brief 释放某一资源
@@ -162,8 +154,7 @@ void acoral_pool_res_init(acoral_pool_t * pool);
 
 /**
  * @brief 资源系统初始化
- * @note link all pools by making every pool's base_adr point to next pool,\
- * 		and then initialize acoral_res_system.system_free_res_pool as the first pool.
+ * @note link all pools by making every pool's base_adr point to next pool
  *
  */
 void acoral_res_sys_init(void);

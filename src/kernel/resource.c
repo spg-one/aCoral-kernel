@@ -12,6 +12,7 @@
 #include "message.h"
 #include "int.h"
 #include "log.h"
+#include "bitops.h"
 
 
 acoral_res_pool_ctrl_t acoral_res_pool_ctrl_container[ACORAL_RES_UNKNOWN] = {
@@ -75,7 +76,7 @@ acoral_pool_t acoral_res_pools[CFG_MAX_RES_POOLS];
 ///aCoral资源池管理系统最顶层数据结构，描述了系统中所有的资源池以及资源池控制块
 acoral_res_system_t acoral_res_system = {
     .system_res_pools = acoral_res_pools,
-    .system_free_res_pool = NULL,
+    .system_res_pools_bitmap = {0},
     .system_res_ctrl_container = acoral_res_pool_ctrl_container,
 };
 
@@ -95,14 +96,12 @@ static int allocate_res_pool(acoral_res_pool_ctrl_t *pool_ctrl)
     }
 
     acoral_enter_critical();
-    pool = acoral_res_system.system_free_res_pool;
-	if (pool != NULL)
-	{
-		acoral_res_system.system_free_res_pool = *(void **)pool->base_adr;
-	}else
-    {
-        return ACORAL_RES_NO_POOL;
+    int first_free_res_pool_index = acoral_find_first_bit_in_array(acoral_res_system.system_res_pools_bitmap, (CFG_MAX_RES_POOLS+31)/32, 0);
+    if(first_free_res_pool_index == -1){
+        return NULL;
     }
+    acoral_set_bit_in_bitmap(first_free_res_pool_index, acoral_res_system.system_res_pools_bitmap);
+    pool = &(acoral_res_system.system_res_pools[first_free_res_pool_index]);
 	acoral_exit_critical();	
 
     /* 定义pool的类型 */
@@ -133,7 +132,7 @@ static int allocate_res_pool(acoral_res_pool_ctrl_t *pool_ctrl)
  *
  * @param pool_ctrl 资源池控制块
  */
-static void release_res_pool(acoral_res_pool_ctrl_t *pool_ctrl)
+static void release_all_res_pool(acoral_res_pool_ctrl_t *pool_ctrl)
 {
 	acoral_pool_t *pool;
 	acoral_list_t *list, *head;
@@ -146,20 +145,21 @@ static void release_res_pool(acoral_res_pool_ctrl_t *pool_ctrl)
 		acoral_list_del(&pool->ctrl_list);
 		acoral_list_del(&pool->free_list);
 		acoral_free(pool->base_adr);
-		pool->base_adr = (void *)acoral_res_system.system_free_res_pool;
+
+		acoral_clear_bit_in_bitmap((pool->id & ACORAL_POOL_INDEX_MASK), acoral_res_system.system_res_pools_bitmap);
 
 		/* 清除清除31到10位的内容，即该资源池的类型acoralResourceTypeEnum,只保留低9位的内容，即该资源池的在acoral_pools的编号 */
 		pool->id = pool->id & ACORAL_POOL_INDEX_MASK;
-		acoral_res_system.system_free_res_pool = pool;
 	}
 }
 
-acoral_res_t *acoral_get_res(acoral_res_pool_ctrl_t *pool_ctrl)
+acoral_res_t *acoral_get_res(acoralResourceTypeEnum res_type)
 {
 	acoral_list_t *first;
 	acoral_res_t *res;
 	acoral_pool_t *pool;
 	acoral_enter_critical();
+    acoral_res_pool_ctrl_t* pool_ctrl = &(acoral_res_system.system_res_ctrl_container[res_type]);
 	first = pool_ctrl->free_pools->next;
 	if (acoral_list_empty(first))
 	{
@@ -237,19 +237,6 @@ acoral_pool_t *acoral_get_pool_by_id(int res_id)
 	return NULL;
 }
 
-acoral_pool_t *acoral_get_free_pool()
-{
-	acoral_pool_t *tmp;
-	acoral_enter_critical();
-	tmp = acoral_res_system.system_free_res_pool;
-	if (NULL != tmp)
-	{
-		acoral_res_system.system_free_res_pool = *(void **)tmp->base_adr;
-	}
-	acoral_exit_critical();
-	return tmp;
-}
-
 acoral_res_t *acoral_get_res_by_id(int id)
 {
 	acoral_pool_t *pool;
@@ -312,8 +299,8 @@ void acoral_res_sys_init()
 	{
 		pool->base_adr = (void *)&acoral_res_pools[i + 1];
 		pool->id = i;
+        pool->type = ACORAL_RES_UNKNOWN;
 		pool++;
 	}
 	pool->base_adr = (void *)0;
-	acoral_res_system.system_free_res_pool = &acoral_res_pools[0];
 }

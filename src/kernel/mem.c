@@ -260,7 +260,7 @@ static int recus_malloc(int level)
 		acoral_mem_ctrl->free_cur[level] = cur;
 		return num;
 	}
-	index = acoral_find_first_bit_in_integer(acoral_mem_ctrl->bitmap[level][cur]); // 获取空闲块在其32位图中的位置
+	index = acoral_find_first_bit_in_integer(acoral_mem_ctrl->bitmap[level][cur], 1); // 获取空闲块在其32位图中的位置
 	index = cur * 32 + index;								 // 计算空闲块实际位置
 	acoral_clear_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]); // 从只有一块空闲变成两块都不空闲了，所以清0
 	if (acoral_mem_ctrl->bitmap[level][cur] == 0)			 // 如果此位图无空闲块了
@@ -320,7 +320,7 @@ static void *r_malloc(unsigned char level)
 		acoral_exit_critical();
 		return (void *)(acoral_mem_ctrl->start_adr + (num << BLOCK_SHIFT));
 	}
-	index = acoral_find_first_bit_in_integer(acoral_mem_ctrl->bitmap[level][cur]);
+	index = acoral_find_first_bit_in_integer(acoral_mem_ctrl->bitmap[level][cur],1);
 	index = index + cur * 32;
 	acoral_clear_bit_in_bitmap(index, acoral_mem_ctrl->bitmap[level]);
 	if (acoral_mem_ctrl->bitmap[level][cur] == 0)

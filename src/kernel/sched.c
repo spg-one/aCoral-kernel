@@ -62,7 +62,7 @@ void acoral_prio_queue_del(acoral_rdy_queue_t *array, unsigned char prio, acoral
 
 unsigned int acoral_get_highprio(acoral_rdy_queue_t *array)
 {
-	return acoral_find_first_bit_in_array(array->bitmap, PRIO_BITMAP_SIZE);
+	return acoral_find_first_bit_in_array(array->bitmap, PRIO_BITMAP_SIZE,1);
 }
 
 void acoral_prio_queue_init(acoral_rdy_queue_t *array)

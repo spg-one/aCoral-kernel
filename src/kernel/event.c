@@ -26,7 +26,8 @@ void system_ipc_module_init()
 {
 	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_EVENT]);
 #if CFG_MSG
-	acoral_msg_sys_init();
+	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MST]);
+	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MSG]);
 #endif
 }
 
