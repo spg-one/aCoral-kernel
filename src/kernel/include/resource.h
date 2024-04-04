@@ -46,6 +46,7 @@ typedef enum{
    ACORAL_RES_MSG, ///<消息
    ACORAL_RES_MST,
 #endif
+    ACORAL_RES_TIMER, ///<定时器
     ACORAL_RES_UNKNOWN ///<未分配的资源池
 }acoralResourceTypeEnum;
 

@@ -24,7 +24,7 @@
 #include "hal.h"
 #include "policy.h"
 #include "comm_thrd.h"
-#include "timer.h"
+#include "./include/timer.h"
 #include "int.h"
 #include "lsched.h"
 #include "log.h"
@@ -72,7 +72,7 @@ void acoral_delayqueue_add(acoral_list_t *queue, acoral_thread_t *new){
 	acoral_list_t   *tmp, *head;
 	acoral_thread_t *thread;
 	int  delay2;
-	int  delay= new->delay;
+	int  delay= new->thread_timer->delay_time;
 	head=queue;
 	acoral_enter_critical();
 	/*这里采用关ticks中断，不用关中断，是为了减少最大关中断时间，下面是个链表，时间不确定。*/
@@ -80,17 +80,17 @@ void acoral_delayqueue_add(acoral_list_t *queue, acoral_thread_t *new){
 
 	new->state|=ACORAL_THREAD_STATE_DELAY;
 	for (tmp=head->next;delay2=delay,tmp!=head; tmp=tmp->next){
-		thread = list_entry (tmp, acoral_thread_t, waiting);
-		delay  = delay-thread->delay;
+		thread = (acoral_thread_t *)acoral_get_res_by_id(((acoral_timer_t*)list_entry(tmp, acoral_timer_t, delay_queue_hook))->owner.id);
+		delay  = delay-thread->thread_timer->delay_time;
 		if (delay < 0)
 			break;
 	}
-	new->delay = delay2;
-	acoral_list_add(&new->waiting,tmp->prev);
+	new->thread_timer->delay_time = delay2;
+	acoral_list_add(&new->thread_timer->delay_queue_hook,tmp->prev);
 	/* 插入等待任务后，后继等待任务时间处理*/
 	if(tmp != head){
-		thread = list_entry(tmp, acoral_thread_t, waiting);
-		thread->delay-=delay2;
+		thread = (acoral_thread_t *)acoral_get_res_by_id(((acoral_timer_t*)list_entry(tmp, acoral_timer_t, delay_queue_hook))->owner.id);
+		thread->thread_timer->delay_time-=delay2;
 	}
 	acoral_unrdy_thread(new);
 
@@ -105,16 +105,16 @@ void time_delay_deal(){
 	head = &time_delay_queue;
 	if(acoral_list_empty(head))
 	  	return;
-	thread=list_entry(head->next,acoral_thread_t,waiting);
-	thread->delay--;
+	thread=(acoral_thread_t *)acoral_get_res_by_id(((acoral_timer_t*)list_entry(head->next, acoral_timer_t, delay_queue_hook))->owner.id);
+	thread->thread_timer->delay_time--;
 	for(tmp=head->next;tmp!=head;){
-		thread=list_entry(tmp,acoral_thread_t,waiting);
-		if(thread->delay>0)
+		thread=(acoral_thread_t *)acoral_get_res_by_id(((acoral_timer_t*)list_entry(tmp, acoral_timer_t, delay_queue_hook))->owner.id);
+		if(thread->thread_timer->delay_time>0)
 		    break;
 		/*防止add判断delay时取下thread*/
 
 		tmp1=tmp->next;
-		acoral_list_del(&thread->waiting);
+		acoral_list_del(&thread->thread_timer->delay_queue_hook);
 
 		tmp=tmp1;
 		thread->state&=~ACORAL_THREAD_STATE_DELAY;
@@ -127,22 +127,22 @@ void timeout_queue_add(acoral_thread_t *new)
 	acoral_list_t   *tmp ,*head;
 	acoral_thread_t *thread;
 	int  delay2;
-	int  delay= new->delay; //SPG用tcb的delay，delay线程也用delay成员，冲突？
+	int  delay= new->thread_timer->delay_time; //SPG用tcb的delay，delay线程也用delay成员，冲突？
 	head=&timeout_queue;
 	acoral_enter_critical();
 
 	for (tmp=head->next;delay2=delay,tmp!=head; tmp=tmp->next){
 		thread = list_entry (tmp, acoral_thread_t, timeout);
-		delay  = delay-thread->delay;
+		delay  = delay-thread->thread_timer->delay_time;
 		if (delay < 0)
 			break;
 	}
-	new->delay = delay2;
+	new->thread_timer->delay_time = delay2;
 	acoral_list_add(&new->timeout,tmp->prev);
 	/* 插入等待任务后，后继等待任务时间处理*/
 	if(tmp != head){
 		thread = list_entry(tmp, acoral_thread_t, timeout);
-		thread->delay-=delay2;
+		thread->thread_timer->delay_time-=delay2;
 	}
 
 	acoral_exit_critical();
@@ -169,12 +169,12 @@ void timeout_delay_deal()
 	}
 
 	thread=list_entry(head->next,acoral_thread_t,timeout);
-	if (thread->delay>0)
-		thread->delay--;
+	if (thread->thread_timer->delay_time>0)
+		thread->thread_timer->delay_time--;
 	for(tmp=head->next;tmp!=head;)
 	{
 		thread=list_entry(tmp,acoral_thread_t,timeout);
-		if(thread->delay>0)
+		if(thread->thread_timer->delay_time>0)
 		    break;
 
 		tmp1=tmp->next;

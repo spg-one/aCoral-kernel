@@ -10,7 +10,7 @@ void p1(){
     return;
 }
 
-void test_period_thrad(){
+void test_period_thread(){
     acoral_period_policy_data_t p1data={
         .time=2000,
         .prio=21,

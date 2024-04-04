@@ -64,7 +64,7 @@ static void init()
 
 	/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/
 #ifdef CFG_SHELL
-	system_shell_init();
+	// system_shell_init();
 #endif
 	user_main();
 	ACORAL_LOG_TRACE("Init Thread Done");
@@ -120,7 +120,6 @@ static void module_init()
 	system_intr_module_init();
 	system_mem_module_init();
 	system_thread_module_init();
-	system_ipc_module_init();
 }
 
 /**

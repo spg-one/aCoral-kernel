@@ -22,15 +22,6 @@
 
 #include <stdio.h>
 
-void system_ipc_module_init()
-{
-	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_EVENT]);
-#if CFG_MSG
-	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MST]);
-	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_MSG]);
-#endif
-}
-
 void acoral_evt_init(acoral_evt_t *evt)
 {
 	acoral_init_list(&evt->wait_queue);

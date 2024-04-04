@@ -156,7 +156,7 @@ void *acoral_msg_recv(acoral_msgctr_t *msgctr,
 	acoral_enter_critical();
 	if (timeout > 0)
 	{
-		cur->delay = time_to_ticks(timeout);
+		cur->thread_timer->delay_time = time_to_ticks(timeout);
 		timeout_queue_add(cur);
 	}
 	while (1)
@@ -198,7 +198,7 @@ void *acoral_msg_recv(acoral_msgctr_t *msgctr,
 		/*-----------------*/
 		acoral_enter_critical();
 
-		if (timeout > 0 && (int)cur->delay <= 0)
+		if (timeout > 0 && (int)cur->thread_timer->delay_time <= 0)
 			break;
 	}
 

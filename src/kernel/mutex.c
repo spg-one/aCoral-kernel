@@ -166,13 +166,13 @@ acoralMutexRetVal acoral_mutex_pend(acoral_evt_t *evt, unsigned int timeout)
 	if (timeout > 0)
 	{
 		/*加载到超时队列*/
-		cur->delay = time_to_ticks(timeout);
+		cur->thread_timer->delay_time = time_to_ticks(timeout);
 		timeout_queue_add(cur);
 	}
 	acoral_exit_critical();
 	acoral_sched();
 	acoral_enter_critical();
-	if (evt->data != cur && timeout > 0 && cur->delay <= 0)
+	if (evt->data != cur && timeout > 0 && cur->thread_timer->delay_time <= 0)
 	{
 		printf("Time Out Return\n");
 		acoral_evt_queue_del(cur);
@@ -230,7 +230,7 @@ acoralMutexRetVal acoral_mutex_pend2(acoral_evt_t *evt, unsigned int timeout)
 	if (timeout > 0)
 	{
 		/*加载到超时队列*/
-		cur->delay = time_to_ticks(timeout);
+		cur->thread_timer->delay_time = time_to_ticks(timeout);
 		timeout_queue_add(cur);
 	}
 	acoral_exit_critical();
@@ -241,7 +241,7 @@ acoralMutexRetVal acoral_mutex_pend2(acoral_evt_t *evt, unsigned int timeout)
 	acoral_enter_critical();
 
 	/*超时时间内未获得互斥量*/
-	if (evt->data != cur && timeout > 0 && cur->delay <= 0)
+	if (evt->data != cur && timeout > 0 && cur->thread_timer->delay_time <= 0)
 	{
 		printf("Time Out Return\n");
 		acoral_evt_queue_del(cur);

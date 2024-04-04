@@ -24,7 +24,7 @@
 #include "lsched.h"
 #include "dag.h"
 
-acoral_list_t period_wait_queue; ///<周期线程专用等待队列，只要是周期线程，就会被挂载到这个队列上，延时时间就是周期，每次周期过后重新挂载
+acoral_list_t period_wait_queue; ///<周期线程专用等待队列，差分队列。只要是周期线程，就会被挂载到这个队列上，延时时间就是周期，每次周期过后重新挂载
 int period_policy_thread_init(acoral_thread_t *thread,void (*route)(void *args),void *args,void *data){
 	unsigned int prio;
 	acoral_period_policy_data_t *policy_data;
@@ -81,26 +81,29 @@ void acoral_periodqueue_add(acoral_thread_t *new){
 	acoral_list_t   *tmp,*head;
 	acoral_thread_t *thread;
 	int  delay2;
-	int  delay= new->delay;
+	int  new_thread_period= new->thread_period_timer->delay_time;
 	head=&period_wait_queue;
 	new->state|=ACORAL_THREAD_STATE_DELAY;
-	for (tmp=head->next;delay2=delay,tmp!=head; tmp=tmp->next){
+
+    /* 找到period_wait_queue中新线程应该插入的位置并插入 */
+	for (tmp=head->next; delay2 = new_thread_period, tmp != head; tmp = tmp->next){
 		thread = list_entry (tmp, acoral_thread_t, period_wait);
-		delay  = delay-thread->delay;
-		if (delay < 0)
+		new_thread_period  = new_thread_period - thread->thread_period_timer->delay_time;
+		if (new_thread_period < 0)
 			break;
 	}
-	new->delay = delay2;
+	new->thread_period_timer->delay_time = delay2;
 	acoral_list_add(&new->period_wait,tmp->prev);
-	/* 插入等待任务后，后继等待任务时间处理*/
+
+	/* 插入新线程后，后续线程的时间处理*/
 	if(tmp != head){
 		thread = list_entry(tmp, acoral_thread_t, period_wait);
-		thread->delay-=delay2;
+		thread->thread_period_timer->delay_time-=delay2;
 	}
 }
 
 void period_thread_delay(acoral_thread_t* thread,unsigned int time){
-	thread->delay=time_to_ticks(time);
+	thread->thread_period_timer->delay_time=time_to_ticks(time);
 	acoral_periodqueue_add(thread);
 }
 
@@ -113,10 +116,10 @@ void period_delay_deal(){
 	if(acoral_list_empty(head))
 	    	return;
 	thread=list_entry(head->next,acoral_thread_t,period_wait);
-	thread->delay--;
+	thread->thread_period_timer->delay_time--;
 	for(tmp=head->next;tmp!=head;){
 		thread=list_entry(tmp,acoral_thread_t,period_wait);
-		if(thread->delay>0)
+		if(thread->thread_period_timer->delay_time>0)
 		    break;
 		private_data=thread->private_data;
 		/*防止add判断delay时取下thread*/

@@ -21,6 +21,8 @@
 #include "mem.h"
 #include "event.h"
 #include "policy.h"
+#include "timer.h"
+
 #include <stdbool.h>
 
 #define ACORAL_MAX_PRIO_NUM ((CFG_MAX_THREAD + 1) & 0xff) ///<41。总共有40个线程，就有0~40共41个优先级
@@ -69,25 +71,29 @@ typedef enum{
  */
 typedef struct acoral_thread_tcb{//SPG加注释
   	acoral_res_t res;	///<资源id，线程创建后作为线程id
+    char *name;
 	acoralThreadStateEnum state;
 	unsigned char prio;
 	acoralSchedPolicyEnum policy;
+    unsigned int *stack; ///<高地址
+	unsigned int *stack_buttom;	///<低地址
+	unsigned int stack_size;
+    
 
 	acoral_list_t ready;	///<用于挂载到全局就绪队列
 	acoral_list_t timeout;
-	acoral_list_t waiting; //SPG 
+	acoral_list_t waiting; //SPG 这个钩子是不是只能勾一个？比如在等待一个互斥量时再去等信号量，就会把互斥量拿下来
 	acoral_list_t global_list;
+
 #if	CFG_THRD_PERIOD
-	acoral_list_t period_wait; ///<周期等待队列
+	acoral_list_t period_wait; ///<周期等待队列//SPG 改名为hook
+    acoral_timer_t* thread_period_timer; ///<用于周期线程等待下一个周期到来，因为线程在等待这个周期的过程中是处于运行状态的，因此不能和thread_timer共用
 #endif
 
-	acoral_evt_t* evt;
-	unsigned int *stack; ///<高地址
-	unsigned int *stack_buttom;	///<低地址
-	unsigned int stack_size;
+	acoral_evt_t* evt; //SPG 只能获取一个信号量或者互斥量？
 
-	int delay;
-	char *name;
+    acoral_timer_t* thread_timer; ///<用于等待互斥量、信号量等的超时时间timeout、线程延时acoral_delay_self的时间，这些等待过程的共同点在于线程都是在suspend状态下等待的，因此不存在又等互斥量又等线程延时时间的情况，因此可以公用一个timer
+	
 	void*	private_data;
 	void*	data;
 }acoral_thread_t;
@@ -108,7 +114,6 @@ void acoral_resume_thread(acoral_thread_t *thread);
 void acoral_kill_thread(acoral_thread_t *thread);
 unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args);
 
-void acoral_thread_pool_init(void);
 void system_thread_module_init(void);
 void acoral_unrdy_thread(acoral_thread_t *thread);
 void acoral_rdy_thread(acoral_thread_t *thread);

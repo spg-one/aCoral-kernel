@@ -13,7 +13,7 @@
 #include "int.h"
 #include "log.h"
 #include "bitops.h"
-
+#include "./include/timer.h"
 
 acoral_res_pool_ctrl_t acoral_res_pool_ctrl_container[ACORAL_RES_UNKNOWN] = {
     {
@@ -64,9 +64,18 @@ acoral_res_pool_ctrl_t acoral_res_pool_ctrl_container[ACORAL_RES_UNKNOWN] = {
         .free_pools = NULL,                         
         .pools = NULL,                              
         .list = {NULL , NULL},                      
-    }
+    },
 #endif
-
+    {
+        .type = ACORAL_RES_TIMER,
+        .size = sizeof(acoral_timer_t),               // 消息容器控制块的大小
+        .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
+        .num = 0,                                   // 初始时没有创建消息容器控制块池
+        .max_pools = 2,                             // 最多允许创建消息容器控制块池的数量
+        .free_pools = NULL,                         
+        .pools = NULL,                              
+        .list = {NULL , NULL},                      
+    },
 };
 
 /// aCoral资源池数组，总共有ACORAL_MAX_POOLS=40个
@@ -177,7 +186,7 @@ acoral_res_t *acoral_get_res(acoralResourceTypeEnum res_type)
 	res = (acoral_res_t *)pool->res_free;
 	pool->res_free = (void *)((unsigned char *)pool->base_adr + res->next_id * pool->size);
 
-	/* 修改被获取的资源的id，原本没被获取时，id第16位表示该资源在池内的编号，现在改到第14位//SPG这是为什么 */
+	/* 修改被获取的资源的id，使bit[13:0]表示所在资源池的id*/
 	res->id = res->id & ACORAL_RES_INDEX_MASK | pool->id;
 	pool->free_num--;
 	if (!pool->free_num)
@@ -303,4 +312,9 @@ void acoral_res_sys_init()
 		pool++;
 	}
 	pool->base_adr = (void *)0;
+
+    /* 为每一类资源都先分配一个资源池 */
+    for(int i = 0; i<ACORAL_RES_UNKNOWN; i++){
+        acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[i]);
+    }
 }

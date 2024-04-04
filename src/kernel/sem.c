@@ -146,7 +146,7 @@ acoralSemRetValEnum acoral_sem_pend(acoral_evt_t *evt, unsigned int timeout)
 	acoral_unrdy_thread(cur);
 	if (timeout > 0)
 	{
-		cur->delay = time_to_ticks(timeout);
+		cur->thread_timer->delay_time = time_to_ticks(timeout);
 		timeout_queue_add(cur);
 	}
 	acoral_evt_queue_add(evt, cur);
@@ -155,7 +155,7 @@ acoralSemRetValEnum acoral_sem_pend(acoral_evt_t *evt, unsigned int timeout)
 	acoral_sched();
 
 	acoral_enter_critical();
-	if (timeout > 0 && cur->delay <= 0)
+	if (timeout > 0 && cur->thread_timer->delay_time <= 0)
 	{
 		//--------------
 		// modify by pegasus 0804: count-- [+]

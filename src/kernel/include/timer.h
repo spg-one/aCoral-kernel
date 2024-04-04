@@ -20,6 +20,15 @@
 #include "core.h"
 #include "thread.h"
 
+typedef struct 
+{
+    acoral_res_t res;
+    acoral_list_t delay_queue_hook;
+    int delay_time;
+    acoral_res_t owner;
+}acoral_timer_t;
+
+
 int time_to_ticks(unsigned int time); 
 extern acoral_list_t time_delay_queue;
 extern acoral_list_t timeout_queue;

@@ -12,15 +12,13 @@
  *   <tr><td> 1.0 <td>王彬浩 <td> 2022-07-08 <td>Standardized 
  *  </table>
  */
+#include "thread.h"
+#include "lsched.h"
+#include "./include/timer.h"
+#include "int.h"
+#include "resource.h"
 
 #include "hal.h"
-#include "lsched.h"
-#include "timer.h"
-#include "mem.h"
-#include "thread.h"
-#include "int.h"
-#include "policy.h"
-#include "resource.h"
 
 #include <stdio.h>
 
@@ -29,14 +27,51 @@ extern void acoral_evt_queue_del(acoral_thread_t *thread);
 acoral_list_t acoral_threads_queue; ///<aCoral全局所有线程队列
 
 int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void *args,char *name,void *stack,acoralSchedPolicyEnum sched_policy,void *data){
-	acoral_thread_t *thread;
-        /*分配tcb数据块*/
+	acoral_thread_t* thread;
+    acoral_timer_t* period_timer;
+    acoral_timer_t* thread_timer;
+
+    /* 分配TCB资源*/
 	thread = (acoral_thread_t *)acoral_get_res(ACORAL_RES_THREAD);
 	if(NULL==thread){
 		printf("Alloc thread:%s fail\n",name);
 		printf("No Mem Space or Beyond the max thread\n");
 		return -1;
 	}
+
+    /* 分配TCB中的period_timer */
+#if CFG_THRD_PERIOD
+    if(sched_policy == ACORAL_SCHED_POLICY_PERIOD){
+        period_timer = (acoral_timer_t *)acoral_get_res(ACORAL_RES_TIMER);
+        if(NULL==period_timer){
+		    printf("Alloc thread timer fail\n");
+		    printf("No Mem Space or Beyond the max thread\n");
+		    return -1;
+	    }
+        acoral_init_list(&period_timer->delay_queue_hook);
+        // (&(period_timer->delay_queue_hook))->next =  0;//SPG 为什么不行
+        // (&(period_timer->delay_queue_hook))->prev =  &(period_timer->delay_queue_hook);
+        // printf("%p\n",&period_timer->delay_queue_hook);
+        thread->thread_period_timer = period_timer;
+        thread->thread_period_timer->owner = thread->res;
+    }else
+    {
+        thread->thread_period_timer = NULL;
+    }
+   
+#endif
+
+    /* 分配TCB中的thread_timer */
+    thread_timer = (acoral_timer_t *)acoral_get_res(ACORAL_RES_TIMER);
+    if(NULL==thread_timer){
+		printf("Alloc thread timer fail\n");
+		printf("No Mem Space or Beyond the max thread\n");
+		return -1;
+	}
+    // acoral_init_list(&thread_timer->delay_queue_hook);
+    thread->thread_timer = thread_timer;
+    thread->thread_timer->owner = thread->res;
+
 	thread->name=name;
 	stack_size=stack_size&(~3);
 	thread->stack_size=stack_size;
@@ -100,14 +135,14 @@ void acoral_resume_thread(acoral_thread_t *thread){
 
 static void acoral_delay_thread(acoral_thread_t* thread,unsigned int time){
 	unsigned int real_ticks;
-	if(!acoral_list_empty(&thread->waiting)){
+	if(!acoral_list_empty(&thread->thread_timer->delay_queue_hook)){
 		return;	
 	}
 
 	/*timeticks*/
 	/*real_ticks=time*CFG_TICKS_PER_SEC/1000;*/
 	real_ticks = time_to_ticks(time);
-	thread->delay=real_ticks;
+	thread->thread_timer->delay_time = real_ticks;
 	/**/
 	acoral_delayqueue_add(&time_delay_queue,thread);
 }
@@ -224,12 +259,7 @@ unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args
 	return 0;
 }
 
-void acoral_thread_pool_init(){//SPG 这个函数打开？
-	acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[ACORAL_RES_THREAD]);
-}
-
 void acoral_sched_mechanism_init(){
-	acoral_thread_pool_init();
 	acoral_thread_runqueue_init();
 	acoral_init_list(&acoral_threads_queue);
 }
