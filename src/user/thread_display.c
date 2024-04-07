@@ -7,14 +7,14 @@
 void display_thread(int argc,char **argv){	
 	acoral_list_t *head,*tmp;
 	acoral_thread_t * thread;
-	head=&acoral_threads_queue;
+	head=&acoral_global_threads_queue;
 	printf("\t\tSystem Thread Information\r\n");
 	printf("------------------------------------------------------\r\n");
 	printf("Name\t\tid\t\tType\t\tState\t\tPrio\r\n");
 	HAL_ENTER_CRITICAL();
 
 	for(tmp=head->next;tmp!=head;tmp=tmp->next){
-		thread=list_entry(tmp,acoral_thread_t,global_list);
+		thread=list_entry(tmp,acoral_thread_t,global_threads_hook);
 		printf("%s\t\t",thread->name);
 		printf("%d\t\t",thread->res.id);
 		switch(thread->policy){

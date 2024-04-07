@@ -28,7 +28,7 @@
 #define ACORAL_MAX_PRIO_NUM ((CFG_MAX_THREAD + 1) & 0xff) ///<41。总共有40个线程，就有0~40共41个优先级
 #define ACORAL_MINI_PRIO CFG_MAX_THREAD ///<aCoral最低优先级40
 
-extern acoral_list_t acoral_threads_queue;
+extern acoral_list_t acoral_global_threads_queue;
 
 typedef enum{
 	ACORAL_INIT_PRIO,	///<init线程独有的0优先级
@@ -69,45 +69,38 @@ typedef enum{
  * 
  * 
  */
-typedef struct acoral_thread_tcb{//SPG加注释
-  	acoral_res_t res;	///<资源id，线程创建后作为线程id
+typedef struct acoral_thread_tcb{
+  	acoral_res_t res;	            ///<资源id，线程创建后作为线程id
+
+    /* 基本信息 */
     char *name;
-	acoralThreadStateEnum state;
-	unsigned char prio;
-	acoralSchedPolicyEnum policy;
-    unsigned int *stack; ///<高地址
-	unsigned int *stack_buttom;	///<低地址
-	unsigned int stack_size;
+	acoralThreadStateEnum state;    ///<线程状态
+	unsigned char prio;             ///<原始优先级
+	acoralSchedPolicyEnum policy;   ///<调度策略
+    unsigned int *stack;            ///<栈顶指针，高地址
+	unsigned int *stack_buttom;	    ///<栈底指针，低地址
+	unsigned int stack_size;        ///<栈大小
     
-
-	acoral_list_t ready;	///<用于挂载到全局就绪队列
-	acoral_list_t timeout;
-	acoral_list_t waiting; //SPG 这个钩子是不是只能勾一个？比如在等待一个互斥量时再去等信号量，就会把互斥量拿下来
-	acoral_list_t global_list;
-
+    /* 钩子 */
+    acoral_list_t global_threads_hook;  ///<用于挂载到全局队列
+    acoral_list_t ready_hook;	        ///<用于挂载到全局就绪队列
+	acoral_list_t timeout_hook;              ///<
+    acoral_list_t daem_hook;            ///<用于挂载到daem线程回收队列
+    acoral_list_t ipc_waiting_hook;     ///<用于挂载到ipc（互斥量、信号量、消息）等待队列
 #if	CFG_THRD_PERIOD
-	acoral_list_t period_wait; ///<周期等待队列//SPG 改名为hook
+	acoral_list_t period_wait_hook; ///<周期等待队列
+
+    /* timer */
     acoral_timer_t* thread_period_timer; ///<用于周期线程等待下一个周期到来，因为线程在等待这个周期的过程中是处于运行状态的，因此不能和thread_timer共用
 #endif
-
-	acoral_evt_t* evt; //SPG 只能获取一个信号量或者互斥量？
-
     acoral_timer_t* thread_timer; ///<用于等待互斥量、信号量等的超时时间timeout、线程延时acoral_delay_self的时间，这些等待过程的共同点在于线程都是在suspend状态下等待的，因此不存在又等互斥量又等线程延时时间的情况，因此可以公用一个timer
 	
+    /* 获取的资源 */
+    acoral_evt_t* evt; //SPG 只能获取一个信号量或者互斥量？
+
 	void*	private_data;
 	void*	data;
 }acoral_thread_t;
-
-/**
- * @brief 这个函数只是在线程执行完毕或者被杀死的时候，让线程进入ACORAL_THREAD_STATE_EXIT状态。
- * 		  虽然这个时候线程已经结束嘞，但是知道发送上下文切换彻底送走这个死掉的线程之前，TCB和堆栈还有用处，比如函数调用还用得到堆栈，所以这个时候还不能被daem回收释放。
- * 		  所以进入ACORAL_THREAD_STATE_EXIT状态的的线程要等到被切换到新线程的上下文之后，才会变成ACORAL_THREAD_STATE_RELEASE状态，这个状态下的线程才会被daem释放。
- * 		  详见绿书P98.
- * 		  
- * 
- * @param thread 线程指针
- */
-void acoral_release_thread1(acoral_thread_t *thread);
 
 void acoral_suspend_thread(acoral_thread_t *thread);
 void acoral_resume_thread(acoral_thread_t *thread);
@@ -117,8 +110,6 @@ unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args
 void system_thread_module_init(void);
 void acoral_unrdy_thread(acoral_thread_t *thread);
 void acoral_rdy_thread(acoral_thread_t *thread);
-void acoral_thread_move2_tail_by_id(int thread_id);
-void acoral_thread_move2_tail(acoral_thread_t *thread);
 void acoral_thread_change_prio(acoral_thread_t* thread, unsigned int prio);
 
 /***************线程控制API****************/

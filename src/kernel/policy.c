@@ -16,10 +16,10 @@
 #include "thread.h"
 #include "policy.h"
 #include "int.h"
-#include <stdio.h>
 #include "comm_thrd.h"
 #include "period_thrd.h"
 
+#include <stdio.h>
 acoral_list_t policy_list;
 
 acoral_sched_policy_t *acoral_get_policy_ctrl(unsigned char type){
@@ -76,7 +76,7 @@ void acoral_sched_policy_init(){
 	acoral_init_list(&policy_list);
 	comm_policy_init();
 
-#ifdef CFG_THRD_PERIOD
+#if CFG_THRD_PERIOD
 	period_policy_init();
 #endif
 }

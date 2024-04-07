@@ -15,82 +15,89 @@
 #include "bitops.h"
 #include "./include/timer.h"
 
-acoral_res_pool_ctrl_t acoral_res_pool_ctrl_container[ACORAL_RES_UNKNOWN] = {
-    {
-        .type = ACORAL_RES_THREAD,
-        .size = sizeof(acoral_thread_t),                     // TCB的大小
-        .num_per_pool = (CFG_MAX_THREAD>20?20:CFG_MAX_THREAD), // 每个TCB池中的TCB数量
-        .num = 0,                                            // 初始时没有创建 TCB 池
-        .max_pools = CFG_MAX_THREAD/(CFG_MAX_THREAD>20?20:CFG_MAX_THREAD), // 最多允许创建TCB池的数量
-        .free_pools = NULL,                                  
-        .pools = NULL,                                      
-        .list = {NULL , NULL},                              
-    },
-#if CFG_EVT_MUTEX || CFG_EVT_SEM
-    {
-        .type = ACORAL_RES_EVENT,
-        .size = sizeof(acoral_evt_t),                  // event控制块ECB的大小
-        .num_per_pool = 8,                             // 每个ECB池中的ECB数量
-        .num = 0,                                      // 初始时没有创建ECB池
-        .max_pools = 4,                                // 最多允许创建ECB池的数量
-        .free_pools = NULL,                           
-        .pools = NULL,                                 
-        .list = {NULL , NULL},                         
-    },
-#endif
 
-#if CFG_DRIVER
-    acoral_driver_pool_ctrl,
-#endif
-
-#if CFG_MSG
-    {
-        .type = ACORAL_RES_MST,
-        .size = sizeof(acoral_msgctr_t),            // 消息容器控制块的大小
-        .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
-        .num = 0,                                   // 初始时没有创建消息容器控制块池
-        .max_pools = 4,                             // 最多允许创建消息容器控制块池的数量
-        .free_pools = NULL,                         
-        .pools = NULL,                              
-        .list = {NULL , NULL},                      
-    },
-
-    {
-        .type = ACORAL_RES_MSG,
-        .size = sizeof(acoral_msg_t),               // 消息容器控制块的大小
-        .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
-        .num = 0,                                   // 初始时没有创建消息容器控制块池
-        .max_pools = 4,                             // 最多允许创建消息容器控制块池的数量
-        .free_pools = NULL,                         
-        .pools = NULL,                              
-        .list = {NULL , NULL},                      
-    },
-#endif
-    {
-        .type = ACORAL_RES_TIMER,
-        .size = sizeof(acoral_timer_t),               // 消息容器控制块的大小
-        .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
-        .num = 0,                                   // 初始时没有创建消息容器控制块池
-        .max_pools = 2,                             // 最多允许创建消息容器控制块池的数量
-        .free_pools = NULL,                         
-        .pools = NULL,                              
-        .list = {NULL , NULL},                      
-    },
-};
-
-/// aCoral资源池数组，总共有ACORAL_MAX_POOLS=40个
-acoral_pool_t acoral_res_pools[CFG_MAX_RES_POOLS];
 
 
 ///aCoral资源池管理系统最顶层数据结构，描述了系统中所有的资源池以及资源池控制块
 acoral_res_system_t acoral_res_system = {
-    .system_res_pools = acoral_res_pools,
-    .system_res_pools_bitmap = {0},
-    .system_res_ctrl_container = acoral_res_pool_ctrl_container,
+    {0},
+    {0},
+    {
+        {
+            .type = ACORAL_RES_THREAD,
+            .size = sizeof(acoral_thread_t),                     // TCB的大小
+            .num_per_pool = (CFG_MAX_THREAD>20?20:CFG_MAX_THREAD), // 每个TCB池中的TCB数量
+            .num = 0,                                            // 初始时没有创建 TCB 池
+            .max_pools = CFG_MAX_THREAD/(CFG_MAX_THREAD>20?20:CFG_MAX_THREAD), // 最多允许创建TCB池的数量
+            .free_pools = NULL,                                  
+            .pools = NULL,                                      
+            .list = {NULL , NULL},                              
+        },
+        {
+            .type = ACORAL_RES_POLICY,
+            .size = sizeof(acoral_sched_policy_t),                     // TCB的大小
+            .num_per_pool = 6, // 每个TCB池中的TCB数量
+            .num = 0,                                            // 初始时没有创建 TCB 池
+            .max_pools = 2, // 最多允许创建TCB池的数量
+            .free_pools = NULL,                                  
+            .pools = NULL,                                      
+            .list = {NULL , NULL},                              
+        },
+#if CFG_EVT_MUTEX || CFG_EVT_SEM
+        {
+            .type = ACORAL_RES_EVENT,
+            .size = sizeof(acoral_evt_t),                  // event控制块ECB的大小
+            .num_per_pool = 8,                             // 每个ECB池中的ECB数量
+            .num = 0,                                      // 初始时没有创建ECB池
+            .max_pools = 4,                                // 最多允许创建ECB池的数量
+            .free_pools = NULL,                           
+            .pools = NULL,                                 
+            .list = {NULL , NULL},                         
+        },
+#endif
+
+#if CFG_DRIVER
+        acoral_driver_pool_ctrl,
+#endif
+
+#if CFG_MSG
+        {
+            .type = ACORAL_RES_MST,
+            .size = sizeof(acoral_msgctr_t),            // 消息容器控制块的大小
+            .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
+            .num = 0,                                   // 初始时没有创建消息容器控制块池
+            .max_pools = 4,                             // 最多允许创建消息容器控制块池的数量
+            .free_pools = NULL,                         
+            .pools = NULL,                              
+            .list = {NULL , NULL},                      
+        },
+
+        {
+            .type = ACORAL_RES_MSG,
+            .size = sizeof(acoral_msg_t),               // 消息容器控制块的大小
+            .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
+            .num = 0,                                   // 初始时没有创建消息容器控制块池
+            .max_pools = 4,                             // 最多允许创建消息容器控制块池的数量
+            .free_pools = NULL,                         
+            .pools = NULL,                              
+            .list = {NULL , NULL},                      
+        },
+#endif
+        {
+            .type = ACORAL_RES_TIMER,
+            .size = sizeof(acoral_timer_t),               // 消息容器控制块的大小
+            .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
+            .num = 0,                                   // 初始时没有创建消息容器控制块池
+            .max_pools = 2,                             // 最多允许创建消息容器控制块池的数量
+            .free_pools = NULL,                         
+            .pools = NULL,                              
+            .list = {NULL , NULL},                      
+        },
+    }
 };
 
 /**
- * @brief 从acoral_res_pools中为某一资源池控制块分配一块资源池
+ * @brief 从acoral_res_system.system_res_pools中为某一资源池控制块分配一块资源池
  * @note 调用的时机包括系统刚初始化时，以及系统中空闲资源池不够时
  *
  * @param pool_ctrl 资源池控制块
@@ -155,6 +162,7 @@ static void release_all_res_pool(acoral_res_pool_ctrl_t *pool_ctrl)
 		acoral_list_del(&pool->free_list);
 		acoral_free(pool->base_adr);
 
+        /* 清除bitmap中这个资源池对应的位 */
 		acoral_clear_bit_in_bitmap((pool->id & ACORAL_POOL_INDEX_MASK), acoral_res_system.system_res_pools_bitmap);
 
 		/* 清除清除31到10位的内容，即该资源池的类型acoralResourceTypeEnum,只保留低9位的内容，即该资源池的在acoral_pools的编号 */
@@ -188,6 +196,8 @@ acoral_res_t *acoral_get_res(acoralResourceTypeEnum res_type)
 
 	/* 修改被获取的资源的id，使bit[13:0]表示所在资源池的id*/
 	res->id = res->id & ACORAL_RES_INDEX_MASK | pool->id;
+
+
 	pool->free_num--;
 	if (!pool->free_num)
 	{
@@ -213,7 +223,7 @@ void acoral_release_res(acoral_res_t *res)
 		ACORAL_LOG_ERROR("Resource %d Release Error",res->id);
 		return;
 	}
-	pool_ctrl = &(acoral_res_pool_ctrl_container[pool->type]);
+	pool_ctrl = &(acoral_res_system.system_res_ctrl_container[pool->type]);
 	
 	index = (((unsigned int)res - (unsigned int)pool->base_adr) / pool->size);
 	if (index >= pool->num)
@@ -240,7 +250,7 @@ acoral_pool_t *acoral_get_pool_by_id(int res_id)
 	index = res_id & ACORAL_POOL_INDEX_MASK;
 	if (index < CFG_MAX_RES_POOLS)
 	{
-		return acoral_res_pools + index;
+		return acoral_res_system.system_res_pools + index;
 	}
 		
 	return NULL;
@@ -285,7 +295,7 @@ void acoral_pool_ctrl_init(acoral_res_pool_ctrl_t *pool_ctrl)
 
 	acoral_init_list(pool_ctrl->pools);
 	acoral_init_list(pool_ctrl->free_pools);
-    
+
 	/* 调整资源池中资源的个数，以最大化利用分配的内存，详见绿书p144 */
 	size = acoral_malloc_adjust_size(pool_ctrl->size * pool_ctrl->num_per_pool);
 	if (size < pool_ctrl->size)
@@ -303,10 +313,10 @@ void acoral_res_sys_init()
 {
 	acoral_pool_t *pool;
 	unsigned int i;
-	pool = &acoral_res_pools[0];
+	pool = &acoral_res_system.system_res_pools[0];
 	for (i = 0; i < (CFG_MAX_RES_POOLS - 1); i++)
 	{
-		pool->base_adr = (void *)&acoral_res_pools[i + 1];
+		pool->base_adr = (void *)&acoral_res_system.system_res_pools[i + 1];
 		pool->id = i;
         pool->type = ACORAL_RES_UNKNOWN;
 		pool++;
@@ -315,6 +325,6 @@ void acoral_res_sys_init()
 
     /* 为每一类资源都先分配一个资源池 */
     for(int i = 0; i<ACORAL_RES_UNKNOWN; i++){
-        acoral_pool_ctrl_init(&acoral_res_pool_ctrl_container[i]);
+        acoral_pool_ctrl_init(&acoral_res_system.system_res_ctrl_container[i]);
     }
 }

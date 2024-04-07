@@ -64,9 +64,9 @@ static void init()
 
 	/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/
 #ifdef CFG_SHELL
-	// system_shell_init();
+	system_shell_init();
 #endif
-	user_main();
+	// user_main();
 	ACORAL_LOG_TRACE("Init Thread Done");
 }
 
@@ -85,7 +85,7 @@ static void daem()
 		{
 			tmp1 = tmp->next;
 			acoral_enter_critical();
-			thread = list_entry(tmp, acoral_thread_t, waiting);
+			thread = list_entry(tmp, acoral_thread_t, daem_hook);
 
 			/* 如果线程资源已经不再使用，即release状态，则释放 */
 			acoral_list_del(tmp);
@@ -94,7 +94,7 @@ static void daem()
 			if (thread->state == ACORAL_THREAD_STATE_RELEASE)
 			{
 				ACORAL_LOG_INFO("Daem is Cleaning Thread: %s",thread->name);
-				acoral_list_del(&thread->global_list);
+				acoral_list_del(&thread->global_threads_hook);
 				system_policy_thread_release(thread);
   				acoral_free((void *)thread->stack_buttom);
 				acoral_release_res((acoral_res_t *)thread);
@@ -103,7 +103,7 @@ static void daem()
 			{
 				acoral_enter_critical();
 				tmp1 = head->prev;
-				acoral_list_add2_tail(&thread->waiting, head); /**/
+				acoral_list_add2_tail(&thread->daem_hook, head); /**/
 				acoral_exit_critical();
 			}
 		}

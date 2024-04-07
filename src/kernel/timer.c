@@ -132,16 +132,16 @@ void timeout_queue_add(acoral_thread_t *new)
 	acoral_enter_critical();
 
 	for (tmp=head->next;delay2=delay,tmp!=head; tmp=tmp->next){
-		thread = list_entry (tmp, acoral_thread_t, timeout);
+		thread = list_entry (tmp, acoral_thread_t, timeout_hook);
 		delay  = delay-thread->thread_timer->delay_time;
 		if (delay < 0)
 			break;
 	}
 	new->thread_timer->delay_time = delay2;
-	acoral_list_add(&new->timeout,tmp->prev);
+	acoral_list_add(&new->timeout_hook,tmp->prev);
 	/* 插入等待任务后，后继等待任务时间处理*/
 	if(tmp != head){
-		thread = list_entry(tmp, acoral_thread_t, timeout);
+		thread = list_entry(tmp, acoral_thread_t, timeout_hook);
 		thread->thread_timer->delay_time-=delay2;
 	}
 
@@ -151,9 +151,9 @@ void timeout_queue_add(acoral_thread_t *new)
 
 void timeout_queue_del(acoral_thread_t *new)
 {
-	if (acoral_list_empty(&new->timeout))
+	if (acoral_list_empty(&new->timeout_hook))
 		return;
-	acoral_list_del(&new->timeout);
+	acoral_list_del(&new->timeout_hook);
 	return;
 }
 
@@ -168,17 +168,17 @@ void timeout_delay_deal()
 	  	return;
 	}
 
-	thread=list_entry(head->next,acoral_thread_t,timeout);
+	thread=list_entry(head->next,acoral_thread_t,timeout_hook);
 	if (thread->thread_timer->delay_time>0)
 		thread->thread_timer->delay_time--;
 	for(tmp=head->next;tmp!=head;)
 	{
-		thread=list_entry(tmp,acoral_thread_t,timeout);
+		thread=list_entry(tmp,acoral_thread_t,timeout_hook);
 		if(thread->thread_timer->delay_time>0)
 		    break;
 
 		tmp1=tmp->next;
-		acoral_list_del(&thread->timeout);
+		acoral_list_del(&thread->timeout_hook);
 
 		tmp=tmp1;
 		/*thread->state*/

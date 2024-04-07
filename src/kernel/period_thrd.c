@@ -13,6 +13,7 @@
  *  </table>
  */
 
+
 #include "thread.h"
 #include "hal.h"
 #include "policy.h"
@@ -20,44 +21,59 @@
 #include "timer.h"
 #include "period_thrd.h"
 #include "int.h"
-#include <stdio.h>
 #include "lsched.h"
 #include "dag.h"
+
+#include <stdio.h>
+
+#if CFG_THRD_PERIOD
 
 acoral_list_t period_wait_queue; ///<周期线程专用等待队列，差分队列。只要是周期线程，就会被挂载到这个队列上，延时时间就是周期，每次周期过后重新挂载
 int period_policy_thread_init(acoral_thread_t *thread,void (*route)(void *args),void *args,void *data){
 	unsigned int prio;
 	acoral_period_policy_data_t *policy_data;
 	period_private_data_t *private_data;
-	if(thread->policy==ACORAL_SCHED_POLICY_PERIOD){
-		policy_data=(acoral_period_policy_data_t *)data;
-		prio=policy_data->prio;
-		if(policy_data->prio_type==ACORAL_NONHARD_PRIO){
-			prio+=ACORAL_NONHARD_RT_PRIO_MAX;
-			if(prio>=ACORAL_NONHARD_RT_PRIO_MIN)
-				prio=ACORAL_NONHARD_RT_PRIO_MIN-1;
-		}
-		//SPG加上硬实时判断
-		// else{
-		// 	prio += ACORAL_HARD_RT_PRIO_MAX;
-		// 	if(prio > ACORAL_HARD_RT_PRIO_MIN){
-		// 		prio = ACORAL_HARD_RT_PRIO_MIN;
-		// }
-		// }
-		thread->prio=prio;
-		private_data=(period_private_data_t *)acoral_malloc(sizeof(period_private_data_t));
-		if(private_data==NULL){
-			printf("No level2 mem space for private_data:%s\n",thread->name);
-			acoral_enter_critical();
-			acoral_release_res((acoral_res_t *)thread);
-			acoral_exit_critical();
-			return -1;
-		}
-		private_data->time=policy_data->time;
-		private_data->route=route;
-		private_data->args=args;
-		thread->private_data=private_data;
-	}
+
+
+    policy_data=(acoral_period_policy_data_t *)data;
+    prio=policy_data->prio;
+    if(policy_data->prio_type==ACORAL_NONHARD_PRIO){
+        prio+=ACORAL_NONHARD_RT_PRIO_MAX;
+        if(prio>=ACORAL_NONHARD_RT_PRIO_MIN)
+            prio=ACORAL_NONHARD_RT_PRIO_MIN-1;
+    }
+    //SPG加上硬实时判断
+    // else{
+    // 	prio += ACORAL_HARD_RT_PRIO_MAX;
+    // 	if(prio > ACORAL_HARD_RT_PRIO_MIN){
+    // 		prio = ACORAL_HARD_RT_PRIO_MIN;
+    // }
+    // }
+    thread->prio=prio;
+    private_data=(period_private_data_t *)acoral_malloc(sizeof(period_private_data_t));
+    if(private_data==NULL){
+        printf("No level2 mem space for private_data:%s\n",thread->name);
+        acoral_enter_critical();
+        acoral_release_res((acoral_res_t *)thread);
+        acoral_exit_critical();
+        return -1;
+    }
+    private_data->time=policy_data->time;
+    private_data->route=route;
+    private_data->args=args;
+    thread->private_data=private_data;
+
+    /* 分配TCB中的period_timer */
+    acoral_timer_t* period_timer = (acoral_timer_t *)acoral_get_res(ACORAL_RES_TIMER);
+    if(NULL==period_timer){
+        printf("Alloc thread timer fail\n");
+        printf("No Mem Space or Beyond the max thread\n");
+        return -1;
+    }
+    acoral_init_list(&period_timer->delay_queue_hook);
+    thread->thread_period_timer = period_timer;
+    thread->thread_period_timer->owner = thread->res;
+
 	if(system_thread_init(thread,route,period_thread_exit,args)!=0){
 		printf("No thread stack:%s\n",thread->name);
 		acoral_enter_critical();
@@ -87,17 +103,17 @@ void acoral_periodqueue_add(acoral_thread_t *new){
 
     /* 找到period_wait_queue中新线程应该插入的位置并插入 */
 	for (tmp=head->next; delay2 = new_thread_period, tmp != head; tmp = tmp->next){
-		thread = list_entry (tmp, acoral_thread_t, period_wait);
+		thread = list_entry (tmp, acoral_thread_t, period_wait_hook);
 		new_thread_period  = new_thread_period - thread->thread_period_timer->delay_time;
 		if (new_thread_period < 0)
 			break;
 	}
 	new->thread_period_timer->delay_time = delay2;
-	acoral_list_add(&new->period_wait,tmp->prev);
+	acoral_list_add(&new->period_wait_hook,tmp->prev);
 
 	/* 插入新线程后，后续线程的时间处理*/
 	if(tmp != head){
-		thread = list_entry(tmp, acoral_thread_t, period_wait);
+		thread = list_entry(tmp, acoral_thread_t, period_wait_hook);
 		thread->thread_period_timer->delay_time-=delay2;
 	}
 }
@@ -115,16 +131,16 @@ void period_delay_deal(){
 	head=&period_wait_queue;
 	if(acoral_list_empty(head))
 	    	return;
-	thread=list_entry(head->next,acoral_thread_t,period_wait);
+	thread=list_entry(head->next,acoral_thread_t,period_wait_hook);
 	thread->thread_period_timer->delay_time--;
 	for(tmp=head->next;tmp!=head;){
-		thread=list_entry(tmp,acoral_thread_t,period_wait);
+		thread=list_entry(tmp,acoral_thread_t,period_wait_hook);
 		if(thread->thread_period_timer->delay_time>0)
 		    break;
 		private_data=thread->private_data;
 		/*防止add判断delay时取下thread*/
 		tmp1=tmp->next;
-		acoral_list_del(&thread->period_wait);
+		acoral_list_del(&thread->period_wait_hook);
 		tmp=tmp1;
 		if(thread->state&ACORAL_THREAD_STATE_SUSPEND){
 			thread->stack=(unsigned int *)((char *)thread->stack_buttom+thread->stack_size-4);
@@ -144,13 +160,17 @@ void period_thread_exit(){
 	acoral_suspend_self();
 }
 
-acoral_sched_policy_t period_policy;
+
 void period_policy_init(void){
 	acoral_init_list(&period_wait_queue);
-	period_policy.type=ACORAL_SCHED_POLICY_PERIOD;
-	period_policy.policy_thread_init=period_policy_thread_init;
-	period_policy.policy_thread_release=period_policy_thread_release;
-	period_policy.delay_deal=period_delay_deal;
-	period_policy.name="period";
-	acoral_register_sched_policy(&period_policy);
+
+    acoral_sched_policy_t* period_policy = acoral_get_res(ACORAL_RES_POLICY);
+
+	period_policy->type=ACORAL_SCHED_POLICY_PERIOD;
+	period_policy->policy_thread_init=period_policy_thread_init;
+	period_policy->policy_thread_release=period_policy_thread_release;
+	period_policy->delay_deal=period_delay_deal;
+	acoral_register_sched_policy(period_policy);
 }
+
+#endif

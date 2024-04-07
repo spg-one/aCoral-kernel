@@ -39,7 +39,7 @@ acoral_thread_t *acoral_evt_high_thread(acoral_evt_t *evt)
 	head = &evt->wait_queue;
 	if (acoral_list_empty(head))
 		return NULL;
-	thread = list_entry(head->next, acoral_thread_t, waiting);
+	thread = list_entry(head->next, acoral_thread_t, ipc_waiting_hook);
 	return thread;
 }
 
@@ -51,7 +51,7 @@ void acoral_evt_queue_add(acoral_evt_t *evt, acoral_thread_t *new)
 	head = &evt->wait_queue;
 	for (tmp = head->next; tmp != head; tmp = tmp->next)
 	{
-		thread = list_entry(tmp, acoral_thread_t, waiting);
+		thread = list_entry(tmp, acoral_thread_t, ipc_waiting_hook);
 		/*如果线程资源已经不在使用，即release状态则释放*/
 		if (thread->prio > new->prio)
 			break;
@@ -59,11 +59,11 @@ void acoral_evt_queue_add(acoral_evt_t *evt, acoral_thread_t *new)
 		if (tmp == tmp->next)
 			break;
 	}
-	acoral_list_add(&new->waiting, tmp->prev);
+	acoral_list_add(&new->ipc_waiting_hook, tmp->prev);
 }
 
 void acoral_evt_queue_del(acoral_thread_t *thread)
 {
-	acoral_list_del(&thread->waiting);
+	acoral_list_del(&thread->ipc_waiting_hook);
 	thread->evt = NULL;
 }

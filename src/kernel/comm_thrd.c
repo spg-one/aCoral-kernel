@@ -59,13 +59,13 @@ static int comm_policy_thread_init(acoral_thread_t *thread, void (*route)(void *
 	return thread->res.id;
 }
 
-acoral_sched_policy_t comm_policy;
+
 void comm_policy_init()
 {
-	comm_policy.type = ACORAL_SCHED_POLICY_COMM;
-	comm_policy.policy_thread_init = comm_policy_thread_init;
-	comm_policy.policy_thread_release = NULL;
-	comm_policy.delay_deal = NULL;
-	comm_policy.name = "comm";
-	acoral_register_sched_policy(&comm_policy);
+    acoral_sched_policy_t* comm_policy = (acoral_sched_policy_t*)acoral_get_res(ACORAL_RES_POLICY);
+	comm_policy->type = ACORAL_SCHED_POLICY_COMM;
+	comm_policy->policy_thread_init = comm_policy_thread_init;
+	comm_policy->policy_thread_release = NULL;
+	comm_policy->delay_deal = NULL;
+	acoral_register_sched_policy(comm_policy);
 }

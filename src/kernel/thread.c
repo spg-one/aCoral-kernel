@@ -24,11 +24,10 @@
 
 extern acoral_list_t daem_res_release_queue;
 extern void acoral_evt_queue_del(acoral_thread_t *thread);
-acoral_list_t acoral_threads_queue; ///<aCoral全局所有线程队列
+acoral_list_t acoral_global_threads_queue; ///<aCoral全局所有线程队列
 
 int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void *args,char *name,void *stack,acoralSchedPolicyEnum sched_policy,void *data){
 	acoral_thread_t* thread;
-    acoral_timer_t* period_timer;
     acoral_timer_t* thread_timer;
 
     /* 分配TCB资源*/
@@ -39,62 +38,29 @@ int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void 
 		return -1;
 	}
 
-    /* 分配TCB中的period_timer */
-#if CFG_THRD_PERIOD
-    if(sched_policy == ACORAL_SCHED_POLICY_PERIOD){
-        period_timer = (acoral_timer_t *)acoral_get_res(ACORAL_RES_TIMER);
-        if(NULL==period_timer){
-		    printf("Alloc thread timer fail\n");
-		    printf("No Mem Space or Beyond the max thread\n");
-		    return -1;
-	    }
-        acoral_init_list(&period_timer->delay_queue_hook);
-        // (&(period_timer->delay_queue_hook))->next =  0;//SPG 为什么不行
-        // (&(period_timer->delay_queue_hook))->prev =  &(period_timer->delay_queue_hook);
-        // printf("%p\n",&period_timer->delay_queue_hook);
-        thread->thread_period_timer = period_timer;
-        thread->thread_period_timer->owner = thread->res;
-    }else
-    {
-        thread->thread_period_timer = NULL;
-    }
-   
-#endif
+    /* TCB基本信息初始化 */
+	thread->name=name;
+	stack_size=stack_size&(~3);
+	thread->stack_size=stack_size;
+    thread->stack_buttom = (stack == NULL) ? NULL : (unsigned int *)stack;
+	thread->policy=sched_policy;
 
-    /* 分配TCB中的thread_timer */
+    /* 初始化TCB的thread_timer */
     thread_timer = (acoral_timer_t *)acoral_get_res(ACORAL_RES_TIMER);
     if(NULL==thread_timer){
 		printf("Alloc thread timer fail\n");
 		printf("No Mem Space or Beyond the max thread\n");
 		return -1;
 	}
-    // acoral_init_list(&thread_timer->delay_queue_hook);
+    acoral_init_list(&thread_timer->delay_queue_hook);
     thread->thread_timer = thread_timer;
     thread->thread_timer->owner = thread->res;
 
-	thread->name=name;
-	stack_size=stack_size&(~3);
-	thread->stack_size=stack_size;
-	if(stack!=NULL)
-		thread->stack_buttom=(unsigned int *)stack;
-	else
-		thread->stack_buttom=NULL;
-	thread->policy=sched_policy;
+    /* 根据策略进行特异初始化 */
 	return acoral_policy_thread_init(sched_policy,thread,route,args,data);
 }
 
 extern int daemon_id;
-
-void acoral_release_thread1(acoral_thread_t *thread){
-	acoral_list_t *head;
-	acoral_thread_t *daem;
-	thread->state=ACORAL_THREAD_STATE_EXIT;
-	head=&daem_res_release_queue;
-	acoral_list_add2_tail(&thread->waiting,head);
-
-	daem=(acoral_thread_t *)acoral_get_res_by_id(daemon_id);
-	acoral_rdy_thread(daem);
-}
 
 void acoral_suspend_thread(acoral_thread_t *thread){
 	if(!(ACORAL_THREAD_STATE_READY&thread->state)) //SPG挂起一个线程等价于把线程从acoral_ready_queues上取下，这就意味着这个线程必须之前在acoral_ready_queues上，也就等价于必须是就绪状态的线程才能被挂起
@@ -160,7 +126,7 @@ void acoral_kill_thread(acoral_thread_t *thread){
 		evt=thread->evt;
 		/**/
 		if(thread->state&ACORAL_THREAD_STATE_DELAY){
-			acoral_list_del(&thread->waiting);
+			acoral_list_del(&thread->thread_timer->delay_queue_hook);
 		}else
 		{
 			/**/
@@ -170,7 +136,14 @@ void acoral_kill_thread(acoral_thread_t *thread){
 		}
 	}
 	acoral_unrdy_thread(thread);
-	acoral_release_thread1(thread);
+	
+    /* 让线程进入ACORAL_THREAD_STATE_EXIT状态，但此时TCB和堆栈在上下文切换和函数调用的时候还有用，直到切换到新线程的上下文之后，才会变成ACORAL_THREAD_STATE_RELEASE状态，这个状态下的线程才会被daem释放。详见绿书P98.*/
+    acoral_list_t *head = &daem_res_release_queue;;
+	acoral_thread_t *daem = (acoral_thread_t *)acoral_get_res_by_id(daemon_id);
+	thread->state=ACORAL_THREAD_STATE_EXIT;
+	acoral_list_add2_tail(&thread->daem_hook,head);
+	acoral_rdy_thread(daem);
+
     acoral_exit_critical();
 	acoral_sched();
 }
@@ -219,19 +192,6 @@ void acoral_unrdy_thread(acoral_thread_t *thread){
 	acoral_rdyqueue_del(thread);
 }
 
-void acoral_thread_move2_tail(acoral_thread_t *thread){
-	acoral_enter_critical();
-	acoral_unrdy_thread(thread);
-	acoral_rdy_thread(thread);
-	acoral_exit_critical();
-	acoral_sched();
-}
-
-void acoral_thread_move2_tail_by_id(int thread_id){
-	acoral_thread_t *thread=(acoral_thread_t *)acoral_get_res_by_id(thread_id);
-	acoral_thread_move2_tail(thread);
-}
-
 unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args){
 	unsigned int stack_size=thread->stack_size;
 	if(thread->stack_buttom==NULL){
@@ -248,20 +208,20 @@ unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args
 	thread->data=NULL;
 	thread->state=ACORAL_THREAD_STATE_SUSPEND;
 	
-	acoral_init_list(&thread->waiting);
-	acoral_init_list(&thread->ready);
-	acoral_init_list(&thread->timeout);
-	acoral_init_list(&thread->global_list);
+	acoral_init_list(&thread->ipc_waiting_hook);
+	acoral_init_list(&thread->ready_hook);
+	acoral_init_list(&thread->timeout_hook);
+	acoral_init_list(&thread->global_threads_hook);
 
 	acoral_enter_critical();
-	acoral_list_add2_tail(&thread->global_list,&acoral_threads_queue);
+	acoral_list_add2_tail(&thread->global_threads_hook,&acoral_global_threads_queue);
 	acoral_exit_critical();
 	return 0;
 }
 
 void acoral_sched_mechanism_init(){
 	acoral_thread_runqueue_init();
-	acoral_init_list(&acoral_threads_queue);
+	acoral_init_list(&acoral_global_threads_queue);
 }
 
 void system_thread_module_init(){

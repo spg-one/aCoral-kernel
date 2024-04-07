@@ -27,7 +27,7 @@
 void acoral_msgctr_queue_add(acoral_msgctr_t *msgctr,
 							 acoral_thread_t *thread)
 { /*需按优先级排序*/
-	/*acoral_list_add2_tail (&thread->waiting, &msgctr->waiting);*/
+	/*acoral_list_add2_tail (&thread->ipc_waiting_hook, &msgctr->waiting);*/
 	acoral_list_t *p, *q;
 	acoral_thread_t *ptd;
 
@@ -35,11 +35,11 @@ void acoral_msgctr_queue_add(acoral_msgctr_t *msgctr,
 	q = p->next;
 	for (; p != q; q = q->next)
 	{
-		ptd = list_entry(q, acoral_thread_t, waiting);
+		ptd = list_entry(q, acoral_thread_t, ipc_waiting_hook);
 		if (ptd->prio > thread->prio)
 			break;
 	}
-	acoral_list_add(&thread->waiting, q->prev);
+	acoral_list_add(&thread->ipc_waiting_hook, q->prev);
 }
 
 acoral_msgctr_t *acoral_msgctr_create()
@@ -208,7 +208,7 @@ void *acoral_msg_recv(acoral_msgctr_t *msgctr,
 	//	timeout_queue_del(cur);
 	if (msgctr->wait_thread_num > 0)
 		msgctr->wait_thread_num--;
-	acoral_list_del(&cur->waiting);
+	acoral_list_del(&cur->ipc_waiting_hook);
 	acoral_exit_critical();
 	*err = MST_ERR_TIMEOUT;
 	return NULL;
@@ -238,8 +238,8 @@ unsigned int acoral_msgctr_del(acoral_msgctr_t *pmsgctr, unsigned int flag)
 			q = p->next;
 			for (; q != p; q = q->next)
 			{
-				thread = list_entry(q, acoral_thread_t, waiting);
-				// acoral_list_del  (&thread->waiting);
+				thread = list_entry(q, acoral_thread_t, ipc_waiting_hook);
+				// acoral_list_del  (&thread->ipc_waiting_hook);
 				acoral_rdy_thread(thread);
 			}
 		}
@@ -277,8 +277,8 @@ void wake_up_thread(acoral_list_t *head)
 
 	p = head;
 	q = p->next;
-	thread = list_entry(q, acoral_thread_t, waiting);
-	acoral_list_del(&thread->waiting);
+	thread = list_entry(q, acoral_thread_t, ipc_waiting_hook);
+	acoral_list_del(&thread->ipc_waiting_hook);
 	acoral_rdy_thread(thread);
 }
 

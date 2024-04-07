@@ -102,7 +102,7 @@ void acoral_rdyqueue_add(acoral_thread_t *thread)
 {
 	acoral_rdy_queue_t *rdy_queue;
 	rdy_queue = &acoral_ready_queues;
-	acoral_prio_queue_add(rdy_queue, thread->prio, &thread->ready);
+	acoral_prio_queue_add(rdy_queue, thread->prio, &thread->ready_hook);
 	thread->state &= ~ACORAL_THREAD_STATE_SUSPEND;
 	thread->state |= ACORAL_THREAD_STATE_READY;
 	system_need_sched = true;
@@ -112,7 +112,7 @@ void acoral_rdyqueue_del(acoral_thread_t *thread)
 {
 	acoral_rdy_queue_t *rdy_queue;
 	rdy_queue = &acoral_ready_queues;
-	acoral_prio_queue_del(rdy_queue, thread->prio, &thread->ready);
+	acoral_prio_queue_del(rdy_queue, thread->prio, &thread->ready_hook);
 	thread->state &= ~ACORAL_THREAD_STATE_READY;
 	thread->state &= ~ACORAL_THREAD_STATE_RUNNING;
 	thread->state |= ACORAL_THREAD_STATE_SUSPEND;
@@ -196,6 +196,6 @@ acoral_thread_t* acoral_select_thread()
 	index = acoral_get_highprio(rdy_queue);
 	queue = rdy_queue->queue + index;
 	head = queue;
-	thread = list_entry(head->next, acoral_thread_t, ready);
+	thread = list_entry(head->next, acoral_thread_t, ready_hook);
 	return thread;
 }
