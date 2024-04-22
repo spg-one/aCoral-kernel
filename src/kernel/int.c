@@ -14,7 +14,7 @@
  */
 
 #include "hal.h"
-#include "lsched.h"
+#include "thread.h"
 #include "int.h"
 #include "plic.h"
 #include <stdio.h>
@@ -50,14 +50,19 @@ void acoral_default_isr(int vector){
 
 unsigned long acoral_intr_exit(unsigned long old_sp){
     if(!system_need_sched)
-	    return ;
-
+    {
+        return ;
+    } 
 	if(acoral_intr_nesting)
-	    return ;
-
+    {
+        return ;
+    }
 	if(system_sched_locked)
-	    return ;
-      
-      /*如果需要调度，则调用此函数*/
+    {
+        return ;
+    }
+	    
+	    
+    /*如果需要调度，则调用此函数*/
 	return HAL_INTR_EXIT_BRIDGE(old_sp);
 }

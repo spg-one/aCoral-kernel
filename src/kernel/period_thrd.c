@@ -18,10 +18,9 @@
 #include "hal.h"
 #include "policy.h"
 #include "mem.h"
-#include "timer.h"
+#include "soft_timer.h"
 #include "period_thrd.h"
 #include "int.h"
-#include "lsched.h"
 #include "dag.h"
 
 #include <stdio.h>

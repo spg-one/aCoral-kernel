@@ -21,14 +21,20 @@
 #include "mem.h"
 #include "event.h"
 #include "policy.h"
-#include "timer.h"
+#include "soft_timer.h"
+#include "lsched.h"
 
 #include <stdbool.h>
 
-#define ACORAL_MAX_PRIO_NUM ((CFG_MAX_THREAD + 1) & 0xff) ///<41。总共有40个线程，就有0~40共41个优先级
 #define ACORAL_MINI_PRIO CFG_MAX_THREAD ///<aCoral最低优先级40
 
-extern acoral_list_t acoral_global_threads_queue;
+extern unsigned char system_need_sched; 
+extern unsigned char system_sched_locked;
+extern acoral_thread_t *acoral_cur_thread;
+
+///就绪队列中的优先级位图的大小，目前等于2，算法就是优先级数目除以32向上取整
+#define ACORAL_MAX_PRIO_NUM ((CFG_MAX_THREAD + 1) & 0xff) ///<41。总共有40个线程，就有0~40共41个优先级
+#define PRIO_BITMAP_SIZE ((ACORAL_MAX_PRIO_NUM+31)/32) 
 
 typedef enum{
 	ACORAL_INIT_PRIO,	///<init线程独有的0优先级
@@ -82,9 +88,8 @@ typedef struct acoral_thread_tcb{
 	unsigned int stack_size;        ///<栈大小
     
     /* 钩子 */
-    acoral_list_t global_threads_hook;  ///<用于挂载到全局队列
     acoral_list_t ready_hook;	        ///<用于挂载到全局就绪队列
-	acoral_list_t timeout_hook;              ///<
+	acoral_list_t timeout_hook;         ///<
     acoral_list_t daem_hook;            ///<用于挂载到daem线程回收队列
     acoral_list_t ipc_waiting_hook;     ///<用于挂载到ipc（互斥量、信号量、消息）等待队列
 #if	CFG_THRD_PERIOD
@@ -93,7 +98,7 @@ typedef struct acoral_thread_tcb{
     /* timer */
     acoral_timer_t* thread_period_timer; ///<用于周期线程等待下一个周期到来，因为线程在等待这个周期的过程中是处于运行状态的，因此不能和thread_timer共用
 #endif
-    acoral_timer_t* thread_timer; ///<用于等待互斥量、信号量等的超时时间timeout、线程延时acoral_delay_self的时间，这些等待过程的共同点在于线程都是在suspend状态下等待的，因此不存在又等互斥量又等线程延时时间的情况，因此可以公用一个timer
+    acoral_timer_t* thread_timer; ///<用于等待互斥量、信号量等的超时时间timeout、线程延时acoral_delay_self的时间，这些等待过程的共同点在于线程都是在suspend状态下等待的，不存在又等互斥量又等线程延时时间的情况，因此可以共用一个timer
 	
     /* 获取的资源 */
     acoral_evt_t* evt; //SPG 只能获取一个信号量或者互斥量？
@@ -102,10 +107,26 @@ typedef struct acoral_thread_tcb{
 	void*	data;
 }acoral_thread_t;
 
+/**
+ * @brief aCoral就绪队列
+ * 
+ */
+typedef struct{
+	unsigned int num;							///<就绪的线程数
+	unsigned int bitmap[PRIO_BITMAP_SIZE];		///<优先级位图，每一位对应一个优先级，为1表示这个优先级有就绪线程
+	acoral_list_t queue[ACORAL_MAX_PRIO_NUM];	///<每一个优先级都有独立的队列
+}acoral_rdy_queue_t;
+
+typedef struct{
+    acoral_list_t daem_thread_res_release_queue;
+    acoral_rdy_queue_t ready_queue;
+}thread_res_private_data;
+
+
 void acoral_suspend_thread(acoral_thread_t *thread);
 void acoral_resume_thread(acoral_thread_t *thread);
 void acoral_kill_thread(acoral_thread_t *thread);
-unsigned int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args);
+int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args);
 
 void system_thread_module_init(void);
 void acoral_unrdy_thread(acoral_thread_t *thread);
@@ -124,7 +145,7 @@ void acoral_thread_change_prio(acoral_thread_t* thread, unsigned int prio);
  * @param stack 线程栈指针
  * @param sched_policy 线程调度策略
  * @param data 线程策略数据
- * @return int 返回线程id
+ * @return int 成功返回线程id，失败返回-1
  */
 int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void *args,char *name,void *stack,acoralSchedPolicyEnum sched_policy,void *data);
 
@@ -182,6 +203,42 @@ void acoral_change_prio_self(unsigned int prio);
  * @param prio 目标优先级
  */
 void acoral_thread_change_prio_by_id(unsigned int thread_id, unsigned int prio);
+
+
+/* *******************lsched.h**************************** */
+
+
+
+
+void system_set_running_thread(acoral_thread_t *thread);
+void acoral_thread_runqueue_init(void);
+
+/**
+ * @brief 将某个线程挂载到就绪队列上
+ * 
+ * @param new 将被挂载的线程
+ */
+void acoral_rdyqueue_add(acoral_thread_t *new);
+
+/**
+ * @brief 从就绪队列上删除一个线程
+ * 
+ * @param old 要删除的线程
+ */
+void acoral_rdyqueue_del(acoral_thread_t *old);
+
+
+/**
+ * @brief 从就绪队列中选出优先级最高的线程
+ * 
+ * @return acoral_thread_t* 优先级最高的线程
+ */
+acoral_thread_t* acoral_select_thread();
+
+void acoral_sched(void);
+void acoral_real_sched();
+unsigned long acoral_real_intr_sched(unsigned long old_sp);
+
 
 #endif
 

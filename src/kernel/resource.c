@@ -13,7 +13,7 @@
 #include "int.h"
 #include "log.h"
 #include "bitops.h"
-#include "./include/timer.h"
+#include "soft_timer.h"
 
 
 
@@ -23,6 +23,7 @@ acoral_res_system_t acoral_res_system = {
     {0},
     {0},
     {
+        {0},
         {
             .type = ACORAL_RES_THREAD,
             .size = sizeof(acoral_thread_t),                     // TCB的大小
@@ -32,6 +33,10 @@ acoral_res_system_t acoral_res_system = {
             .free_pools = NULL,                                  
             .pools = NULL,                                      
             .list = {NULL , NULL},                              
+            .type_private_data = &(thread_res_private_data){
+                .daem_thread_res_release_queue = NULL,
+                .ready_queue = NULL
+            }
         },
         {
             .type = ACORAL_RES_POLICY,
@@ -318,13 +323,13 @@ void acoral_res_sys_init()
 	{
 		pool->base_adr = (void *)&acoral_res_system.system_res_pools[i + 1];
 		pool->id = i;
-        pool->type = ACORAL_RES_UNKNOWN;
+        pool->type = ACORAL_RES_MAX;
 		pool++;
 	}
 	pool->base_adr = (void *)0;
 
     /* 为每一类资源都先分配一个资源池 */
-    for(int i = 0; i<ACORAL_RES_UNKNOWN; i++){
+    for(int i = 0; i<ACORAL_RES_MAX; i++){
         acoral_pool_ctrl_init(&acoral_res_system.system_res_ctrl_container[i]);
     }
 }

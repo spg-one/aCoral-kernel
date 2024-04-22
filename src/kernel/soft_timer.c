@@ -24,9 +24,9 @@
 #include "hal.h"
 #include "policy.h"
 #include "comm_thrd.h"
-#include "./include/timer.h"
+#include "soft_timer.h"
 #include "int.h"
-#include "lsched.h"
+#include "thread.h"
 #include "log.h"
 #include "list.h"
 #include <stdbool.h>

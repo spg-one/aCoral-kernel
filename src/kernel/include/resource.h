@@ -32,6 +32,7 @@
  * 
  */
 typedef enum{
+    ACORAL_RES_UNKNOWN,
     ACORAL_RES_THREAD, ///<TCB
     ACORAL_RES_POLICY, ///<调度策略
     // ACORAL_RES_LIST,   ///<队列（列表）
@@ -50,7 +51,7 @@ typedef enum{
 #endif
 
     ACORAL_RES_TIMER, ///<定时器
-    ACORAL_RES_UNKNOWN ///<未分配的资源池
+    ACORAL_RES_MAX ///<未分配的资源池
 }acoralResourceTypeEnum;
 
 /**
@@ -84,7 +85,7 @@ typedef struct {
    unsigned int size; ///< 该资源池中每个资源的大小
    unsigned int num; ///< 资源池中资源的总数
    unsigned int free_num; ///< 资源池中未分配的资源个数
-   acoralResourceTypeEnum type; ///< 该资源池的类型（acoralResourceTypeEnum）
+   acoralResourceTypeEnum type; ///< 该资源池的类型（acoralResourceTypeEnum）//SPG 好像没用到
    acoral_list_t ctrl_list; ///< 资源池创建后挂载到资源池控制块pools链表上的钩子
    acoral_list_t free_list; ///< 资源池中尚有未分配的资源时，挂载到资源池控制块free_pools链表的钩子
 }acoral_pool_t;
@@ -101,7 +102,8 @@ typedef struct {
   unsigned int max_pools;       ///< 该资源池控制块最多可管理的资源池数量
   acoral_list_t* free_pools;    ///< 该资源池控制块当前管理的资源池中未满的资源池链表表头
   acoral_list_t* pools;         ///< 该资源池控制块管理的所有资源池的链表
-  acoral_list_t list[2]; 
+  acoral_list_t list[2];
+  void* type_private_data; 
 }acoral_res_pool_ctrl_t;
 
 /**
@@ -111,7 +113,7 @@ typedef struct {
 typedef struct {
     acoral_pool_t system_res_pools[CFG_MAX_RES_POOLS]; ///<系统中所有的资源池
     int system_res_pools_bitmap[(CFG_MAX_RES_POOLS+31)/32]; ///<每一位0代表未分配，1代表已分配
-    acoral_res_pool_ctrl_t system_res_ctrl_container[ACORAL_RES_UNKNOWN]; ///<各类资源池控制块的容器
+    acoral_res_pool_ctrl_t system_res_ctrl_container[ACORAL_RES_MAX]; ///<各类资源池控制块的容器
 }acoral_res_system_t;
 
 extern acoral_res_system_t acoral_res_system;

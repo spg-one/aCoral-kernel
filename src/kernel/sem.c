@@ -15,10 +15,9 @@
 
 #include "event.h"
 #include "thread.h"
-#include "lsched.h"
 #include "hal.h"
 #include "int.h"
-#include "timer.h"
+#include "soft_timer.h"
 #include "sem.h"
 #include <stdio.h>
 

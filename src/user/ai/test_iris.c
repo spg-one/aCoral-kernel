@@ -20,7 +20,6 @@
 #include "sysctl.h"
 #include "dmac.h"
 #include "kpu.h"
-#include <assert.h>
 #include <stdio.h>
 #include <float.h>
 

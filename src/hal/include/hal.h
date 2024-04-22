@@ -24,6 +24,9 @@
 #include "../K210/include/hal_thread.h"
 #include "../K210/include/hal_timer.h"
 
+///RISC-V要求sp寄存器16字节对齐
+#define hal_sp_align 16 
+
 #elif CFG_SOC == SOC_S3C2440 
 #endif
 

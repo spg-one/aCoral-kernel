@@ -16,9 +16,8 @@
 #include "event.h"
 #include "hal.h"
 #include "thread.h"
-#include "lsched.h"
 #include "int.h"
-#include "timer.h"
+#include "soft_timer.h"
 #include "message.h"
 #include "resource.h"
 

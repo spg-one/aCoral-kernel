@@ -8,7 +8,6 @@
  */
 #include "comm_thrd.h"
 #include "thread.h"
-#include "lsched.h"
 #include "policy.h"
 #include "int.h"
 #include "log.h"

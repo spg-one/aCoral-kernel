@@ -14,7 +14,7 @@
  */
 
 #include "./include/hal_int.h"
-#include "lsched.h"
+#include "thread.h"
 #include <stdint.h>
 
 #include "sysctl.h"

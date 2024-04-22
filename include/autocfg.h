@@ -83,18 +83,4 @@ typedef enum{
 
 #undef ARCH_ACORAL_FPU /*//SPG中断保护现场那里*/
 
-#undef EN_ASSERT //开启断言需要define
-#ifdef EN_ASSERT
-#define Assert(cond, format, ...) \
-  do { \
-    if (!(cond)) { \
-      fprintf(stderr, format "\n" , ## __VA_ARGS__); \
-      assert(cond); \
-    } \
-  } while (0)
-
-#else
-#define Assert(cond, format, ...)
-#endif
-
 #endif
