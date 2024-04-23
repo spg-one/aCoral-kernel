@@ -18,6 +18,7 @@
 #include "int.h"
 #include "comm_thrd.h"
 #include "period_thrd.h"
+#include "log.h"
 
 #include <stdio.h>
 acoral_list_t policy_list;
@@ -35,17 +36,17 @@ acoral_sched_policy_t *acoral_get_policy_ctrl(unsigned char type){
 	return NULL;
 }
 
-int acoral_policy_thread_init(acoralSchedPolicyEnum policy,acoral_thread_t *thread,void (*route)(void *args),void *args,void *data){
-	acoral_sched_policy_t   *policy_ctrl;
-	policy_ctrl=acoral_get_policy_ctrl(policy);	
-	if(policy_ctrl==NULL||policy_ctrl->policy_thread_init==NULL){
+int acoral_policy_thread_init(acoralSchedPolicyEnum policy,acoral_thread_t *thread,void *data){
+	acoral_sched_policy_t *policy_ctrl;
+	policy_ctrl = acoral_get_policy_ctrl(policy);	
+	if(policy_ctrl == NULL || policy_ctrl->policy_thread_init == NULL){
 		acoral_enter_critical();
 		acoral_release_res((acoral_res_t *)thread);
 		acoral_exit_critical();
-		printf("No thread policy support:%d\n",thread->policy);
+		ACORAL_LOG_ERROR("No thread policy support:%d\n",thread->policy);
 		return -1;
 	}
-	return policy_ctrl->policy_thread_init(thread,route,args,data);
+	return policy_ctrl->policy_thread_init(thread,data);
 }
 
 void acoral_register_sched_policy(acoral_sched_policy_t *policy){

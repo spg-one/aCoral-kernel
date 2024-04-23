@@ -19,33 +19,12 @@
  * @brief 初始化普通线程的一些数据
  * 
  * @param thread TCB指针
- * @param route 线程函数
- * @param args 线程函数参数
- * @param data 线程私有数据
+ * @param data 线程私有数据，普通线程为NULL
  * @return int 线程id
  */
-static int comm_policy_thread_init(acoral_thread_t *thread, void (*route)(void *args), void *args, void *data)
+static int comm_policy_thread_init(acoral_thread_t *thread, void *data)
 {
-	unsigned int prio;
-	acoral_comm_policy_data_t *policy_data;
-	policy_data = (acoral_comm_policy_data_t *)data;
-	prio = policy_data->prio;
-	if (policy_data->prio_type == ACORAL_NONHARD_PRIO)
-	{
-		prio += ACORAL_NONHARD_RT_PRIO_MAX;
-		if (prio >= ACORAL_NONHARD_RT_PRIO_MIN)
-			prio = ACORAL_NONHARD_RT_PRIO_MIN;
-	}
-	// SPG加上硬实时判断
-	//  else{
-	//  	prio += ACORAL_HARD_RT_PRIO_MAX;
-	//  	if(prio > ACORAL_HARD_RT_PRIO_MIN){
-	//  		prio = ACORAL_HARD_RT_PRIO_MIN;
-	//  	}
-	//  }
-	thread->prio = prio;
-
-	if (system_thread_init(thread, route, comm_thread_exit, args) != 0)
+	if (system_thread_init(thread, comm_thread_exit) != 0)
 	{
 		ACORAL_LOG_ERROR("No thread stack:%s", thread->name);
 		acoral_enter_critical();

@@ -15,18 +15,19 @@
 #include <stdio.h>
 
 extern void acoral_evt_queue_del(acoral_thread_t *thread);
+extern int daemon_id;
 
 /// aCoral是否需要调度标志，仅当aCoral就绪队列ready_queue有线程加入或被取下时，该标志被置为true；
 /// 当发生调度之后，该标志位被置为false，直到又有新的线程被就绪或者挂起
 unsigned char system_need_sched = false; 
 
-/// aCoral初始化完成之前，调度都是被上锁的，即不允许调度。 
+/// aCoral初始化完成之前，调度都是被上锁的 
 unsigned char system_sched_locked = true;
 
 /// acoral当前运行的线程
 acoral_thread_t *acoral_cur_thread = NULL;		
 
-int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void *args,char *name,void *stack,acoralSchedPolicyEnum sched_policy,void *data){
+int acoral_create_thread(char *name, void (*route)(void *args),void *args,unsigned int stack_size,void *stack,acoralSchedPolicyEnum sched_policy,unsigned char prio,acoralPrioTypeEnum prio_type,void *data){
 	acoral_thread_t* thread;
     acoral_timer_t* thread_timer;
 
@@ -39,10 +40,29 @@ int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void 
 
     /* TCB 基本信息初始化 */
 	thread->name = name;
+    thread->state = ACORAL_THREAD_STATE_SUSPEND;
+    thread->route = route;
+    thread->args = args;
+    thread->policy = sched_policy;
+    thread->prio = prio;
+    thread->prio_type = prio_type;
 	thread->stack_size = stack_size&(~(hal_sp_align-1)); //确保堆栈是hal_sp_align字节对齐的
     thread->stack_buttom = (stack == NULL) ? NULL : (unsigned int *)stack;
-	thread->policy=sched_policy;
-	thread->state=ACORAL_THREAD_STATE_SUSPEND;
+
+    /* 根据优先级类型调整prio */
+    if (thread->prio_type == ACORAL_NONHARD_PRIO)
+	{
+		thread->prio += ACORAL_NONHARD_RT_PRIO_MAX;
+		if (thread->prio >= ACORAL_NONHARD_RT_PRIO_MIN)
+			thread->prio = ACORAL_NONHARD_RT_PRIO_MIN;
+	}
+	// SPG加上硬实时判断
+	//  else{
+	//  	thread->prio += ACORAL_HARD_RT_PRIO_MAX;
+	//  	if(thread->prio > ACORAL_HARD_RT_PRIO_MIN){
+	//  		thread->prio = ACORAL_HARD_RT_PRIO_MIN;
+	//  	}
+	//  }
 
     /* 钩子初始化 */
     acoral_init_list(&thread->timeout_hook);
@@ -60,37 +80,33 @@ int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void 
     thread->thread_timer = thread_timer;
     thread->thread_timer->owner = thread->res;
 
-    /* 线程私有数据初始化 */
-    thread->data=NULL;
-
     /* 根据策略进行特异初始化 */
-	return acoral_policy_thread_init(sched_policy,thread,route,args,data);
+	return acoral_policy_thread_init(sched_policy,thread,data);
 }
 
-extern int daemon_id;
-
-void acoral_suspend_thread(acoral_thread_t *thread){
-	if(!(ACORAL_THREAD_STATE_READY&thread->state)) //SPG挂起一个线程等价于把线程从acoral_ready_queues上取下，这就意味着这个线程必须之前在acoral_ready_queues上，也就等价于必须是就绪状态的线程才能被挂起
-		return;
-
+static void suspend_thread(acoral_thread_t *thread){
+	/* 挂起一个线程等价于把线程从acoral_ready_queues上取下，这就意味着这个线程必须之前在acoral_ready_queues上，也就等价于必须是就绪状态的线程才能被挂起*/
+    if(!(ACORAL_THREAD_STATE_READY&thread->state)) 
+	{
+        return;
+    }
 	acoral_enter_critical();
-	/**/
 	acoral_rdyqueue_del(thread);
 	acoral_exit_critical();
-	/**/
+
 	acoral_sched();
 }
 
 void acoral_suspend_self(){
-	acoral_suspend_thread(acoral_cur_thread);
+	suspend_thread(acoral_cur_thread);
 }
 
-void acoral_suspend_thread_by_id(unsigned int thread_id){
+void acoral_suspend_thread_by_id(int thread_id){
 	acoral_thread_t *thread=(acoral_thread_t *)acoral_get_res_by_id(thread_id);
-	acoral_suspend_thread(thread);
+	suspend_thread(thread);
 }
 
-void acoral_resume_thread_by_id(unsigned int thread_id){
+void acoral_resume_thread_by_id(int thread_id){
 	acoral_thread_t *thread=(acoral_thread_t *)acoral_get_res_by_id(thread_id);
 	acoral_resume_thread(thread);
 }
@@ -201,7 +217,7 @@ void acoral_unrdy_thread(acoral_thread_t *thread){
 	acoral_rdyqueue_del(thread);
 }
 
-int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args){
+int system_thread_init(acoral_thread_t *thread,void (*exit)(void)){
 	unsigned int stack_size=thread->stack_size;
 	if(thread->stack_buttom==NULL){
 		if(stack_size<CFG_MIN_STACK_SIZE)
@@ -212,7 +228,7 @@ int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*
 		thread->stack_size=stack_size;
 	}
 	thread->stack=(unsigned int *)((char *)thread->stack_buttom+stack_size-4);
-	thread->stack = HAL_STACK_INIT(thread->stack,route,exit,args);
+	thread->stack = HAL_STACK_INIT(thread->stack,thread->route,exit,thread->args);
 
 	return 0;
 }

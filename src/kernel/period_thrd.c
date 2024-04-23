@@ -28,39 +28,27 @@
 #if CFG_THRD_PERIOD
 
 acoral_list_t period_wait_queue; ///<周期线程专用等待队列，差分队列。只要是周期线程，就会被挂载到这个队列上，延时时间就是周期，每次周期过后重新挂载
-int period_policy_thread_init(acoral_thread_t *thread,void (*route)(void *args),void *args,void *data){
-	unsigned int prio;
+
+/**
+ * @brief 初始化周期线程的一些数据
+ * 
+ * @param thread 线程指针
+ * @param data 周期线程数据，acoral_period_policy_data_t
+ * @return int 
+ */
+static int period_policy_thread_init(acoral_thread_t *thread,void *data){
 	acoral_period_policy_data_t *policy_data;
-	period_private_data_t *private_data;
 
-
-    policy_data=(acoral_period_policy_data_t *)data;
-    prio=policy_data->prio;
-    if(policy_data->prio_type==ACORAL_NONHARD_PRIO){
-        prio+=ACORAL_NONHARD_RT_PRIO_MAX;
-        if(prio>=ACORAL_NONHARD_RT_PRIO_MIN)
-            prio=ACORAL_NONHARD_RT_PRIO_MIN-1;
-    }
-    //SPG加上硬实时判断
-    // else{
-    // 	prio += ACORAL_HARD_RT_PRIO_MAX;
-    // 	if(prio > ACORAL_HARD_RT_PRIO_MIN){
-    // 		prio = ACORAL_HARD_RT_PRIO_MIN;
-    // }
-    // }
-    thread->prio=prio;
-    private_data=(period_private_data_t *)acoral_malloc(sizeof(period_private_data_t));
-    if(private_data==NULL){
-        printf("No level2 mem space for private_data:%s\n",thread->name);
+    policy_data=(acoral_period_policy_data_t *)acoral_malloc(sizeof(acoral_period_policy_data_t));
+    if(policy_data==NULL){
+        printf("No level2 mem space for policy_data:%s\n",thread->name);
         acoral_enter_critical();
         acoral_release_res((acoral_res_t *)thread);
         acoral_exit_critical();
         return -1;
     }
-    private_data->time=policy_data->time;
-    private_data->route=route;
-    private_data->args=args;
-    thread->private_data=private_data;
+    policy_data->period_time_mm=((acoral_period_policy_data_t*)data)->period_time_mm;
+    thread->policy_data=policy_data;
 
     /* 分配TCB中的period_timer */
     acoral_timer_t* period_timer = (acoral_timer_t *)acoral_get_res(ACORAL_RES_TIMER);
@@ -73,7 +61,7 @@ int period_policy_thread_init(acoral_thread_t *thread,void (*route)(void *args),
     thread->thread_period_timer = period_timer;
     thread->thread_period_timer->owner = thread->res;
 
-	if(system_thread_init(thread,route,period_thread_exit,args)!=0){
+	if(system_thread_init(thread,period_thread_exit)!=0){
 		printf("No thread stack:%s\n",thread->name);
 		acoral_enter_critical();
 		acoral_release_res((acoral_res_t *)thread);
@@ -83,13 +71,13 @@ int period_policy_thread_init(acoral_thread_t *thread,void (*route)(void *args),
         /*将线程就绪，并重新调度*/
 	acoral_resume_thread(thread);
 	acoral_enter_critical();
-	period_thread_delay(thread,((period_private_data_t *)thread->private_data)->time);
+	period_thread_delay(thread,((acoral_period_policy_data_t*)data)->period_time_mm);
 	acoral_exit_critical();
 	return thread->res.id;
 }
 
 void period_policy_thread_release(acoral_thread_t *thread){
-	acoral_free2(thread->private_data);	
+	acoral_free2(thread->policy_data);	
 }
 
 void acoral_periodqueue_add(acoral_thread_t *new){
@@ -126,7 +114,6 @@ void period_delay_deal(){
 	// int need_re_sched= 0;
 	acoral_list_t *tmp,*tmp1,*head;
 	acoral_thread_t * thread;
-	period_private_data_t * private_data;
 	head=&period_wait_queue;
 	if(acoral_list_empty(head))
 	    	return;
@@ -136,18 +123,17 @@ void period_delay_deal(){
 		thread=list_entry(tmp,acoral_thread_t,period_wait_hook);
 		if(thread->thread_period_timer->delay_time>0)
 		    break;
-		private_data=thread->private_data;
 		/*防止add判断delay时取下thread*/
 		tmp1=tmp->next;
 		acoral_list_del(&thread->period_wait_hook);
 		tmp=tmp1;
 		if(thread->state&ACORAL_THREAD_STATE_SUSPEND){
 			thread->stack=(unsigned int *)((char *)thread->stack_buttom+thread->stack_size-4);
-			thread->stack = HAL_STACK_INIT(thread->stack,private_data->route,period_thread_exit,private_data->args);
+			thread->stack = HAL_STACK_INIT(thread->stack,thread->route,period_thread_exit,thread->args);
 			acoral_rdy_thread(thread);
 			// need_re_sched = 1;
 		}
-		period_thread_delay(thread,private_data->time);
+		period_thread_delay(thread,((acoral_period_policy_data_t*)thread->policy_data)->period_time_mm);
 		// if(need_re_sched)
 		// {
 		// 	acoral_sched();//SPG我是小丑，时钟中断里不能调度的，应该在把中断退出函数加回来

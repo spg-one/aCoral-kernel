@@ -113,37 +113,22 @@ static void daem()
 }
 
 /**
- * @brief aCoral内核各模块初始化
- * 
- */
-static void module_init()
-{
-	system_intr_module_init();
-	system_mem_module_init();
-	system_thread_module_init();
-}
-
-/**
  * @brief 主CPU创建idle、init、daem线程
  * 
  */
 static void main_cpu_start()
 {
-	acoral_comm_policy_data_t data;
 
 	/* 创建idle线程 */
-	data.prio = ACORAL_IDLE_PRIO;
-	data.prio_type = ACORAL_HARD_PRIO;
-	idle_id = acoral_create_thread(idle, IDLE_STACK_SIZE, NULL, "idle", NULL, ACORAL_SCHED_POLICY_COMM, &data);
+	idle_id = acoral_create_thread("idle",idle, NULL, IDLE_STACK_SIZE,  NULL, ACORAL_SCHED_POLICY_COMM, ACORAL_IDLE_PRIO,ACORAL_HARD_PRIO,NULL);
 	if (idle_id == -1) //SPG 不一定是-1才有问题吧
 	{
 		ACORAL_LOG_ERROR("Create Idle Thread Failed");
-		exit(2);
+		exit(2);//SPG 新建一个lib文件夹，用宏定义来封装不同的SDK
 	}
 
 	/* 创建init线程 */
-	data.prio = ACORAL_INIT_PRIO;
-	init_id = acoral_create_thread(init, INIT_STACK_SIZE, "in init", "init", NULL, ACORAL_SCHED_POLICY_COMM, &data);
+	init_id = acoral_create_thread("init",init, "in init", INIT_STACK_SIZE,  NULL, ACORAL_SCHED_POLICY_COMM, ACORAL_INIT_PRIO,ACORAL_HARD_PRIO,NULL);
 	if (init_id == -1)
 	{
 		ACORAL_LOG_ERROR("Create Init Thread Failed");
@@ -151,9 +136,7 @@ static void main_cpu_start()
 	}
 
 	/* 创建daem线程 */
-	data.prio = ACORAL_DAEMON_PRIO;
-	data.prio_type = ACORAL_HARD_PRIO;
-	daemon_id = acoral_create_thread(daem, DAEM_STACK_SIZE, NULL, "daemon", NULL, ACORAL_SCHED_POLICY_COMM, &data);
+	daemon_id = acoral_create_thread("daemon",daem, NULL, DAEM_STACK_SIZE,  NULL, ACORAL_SCHED_POLICY_COMM, ACORAL_DAEMON_PRIO,ACORAL_HARD_PRIO,NULL);
 	if (daemon_id == -1){
 		ACORAL_LOG_ERROR("Create Daem Thread Failed");
 		exit(2);
@@ -173,8 +156,11 @@ void system_start()
 
 	ACORAL_LOG_DEBUG("Build at %s %s",__DATE__,__TIME__);
 
+    /* aCoral内核各模块初始化 */
 	ACORAL_LOG_TRACE("Kernel Module Init Start");
-	module_init();
+    system_intr_module_init();
+	system_mem_module_init();
+	system_thread_module_init();
 	ACORAL_LOG_TRACE("Kernel Module Init Done");
 
 	main_cpu_start();

@@ -15,10 +15,6 @@
  * @brief 普通线程调度相关的数据
  * 
  */
-typedef struct{
-	unsigned char prio; 			///<优先级
-	acoralPrioTypeEnum prio_type; 	///<线程优先级类型，包括硬实时任务ACORAL_HARD_PRIO、非硬实时任务ACORAL_NONHARD_PRIO
-}acoral_comm_policy_data_t;
 
 /**
  * @brief 注册普通机制

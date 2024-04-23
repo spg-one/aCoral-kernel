@@ -1,8 +1,9 @@
 #ifndef USER_H
 #define USER_H
 
-#include "test_period.h"
-#include "test_iris.h"
-#include "test_yolo2.h"
+void test_comm_thread();
+void test_period_thread();
+int test_yolo2();
+int test_iris();
 
 #endif

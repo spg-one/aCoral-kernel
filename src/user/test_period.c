@@ -11,10 +11,8 @@ void p1(){
 
 void test_period_thread(){
     acoral_period_policy_data_t p1data={
-        .time=2000,
-        .prio=21,
-        .prio_type=ACORAL_HARD_PRIO
+        .period_time_mm = 2000
     };
 
-    acoral_create_thread(p1,0,NULL,"p1",NULL,ACORAL_SCHED_POLICY_PERIOD,&p1data);
+    acoral_create_thread("p1",p1,NULL,0,NULL,ACORAL_SCHED_POLICY_PERIOD,21,ACORAL_HARD_PRIO,&p1data);
 }

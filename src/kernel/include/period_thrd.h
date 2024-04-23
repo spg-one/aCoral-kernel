@@ -23,24 +23,12 @@
  * 
  */
 typedef struct{
-	unsigned char prio; 		///<线程优先级
-	acoralPrioTypeEnum prio_type; 	///<线程优先级类型，包括硬实时任务ACORAL_HARD_PRIO、非硬实时任务ACORAL_NONHARD_PRIO
-	unsigned int time; 			///<线程周期，单位为毫秒
+	unsigned int period_time_mm; 			///<线程周期，单位为毫秒
 }acoral_period_policy_data_t;
-
-/**
- * @brief 周期线程私有数据块，用于保存自己的周期、函数体，以便在新周期重新挂载线程时用
- * 
- */
-typedef struct{
-	unsigned int time; 			///<线程周期，单位为毫秒
-	void (*route)(void *args); 	///<线程函数
-	void *args; 				///<线程函数的参数
-}period_private_data_t;
 
 void period_thread_exit(void);
 void period_thread_delay(acoral_thread_t* thread,unsigned int time);
 void period_delay_deal(void);
-int period_policy_thread_init(acoral_thread_t *thread,void (*route)(void *args),void *args,void *data);
+
 void period_policy_init(void);
 #endif

@@ -18,7 +18,7 @@ void display_thread_new(int argc,char **argv){
     }
     
     printf("\t\tSystem Thread Information\r\n");
-	printf("------------------------------------------------------\r\n");
+	printf("----------------------------------------------------------------\r\n");
 	printf("Name\t\tid\t\tType\t\tState\t\tPrio\r\n");
 	HAL_ENTER_CRITICAL();
 
@@ -50,7 +50,9 @@ void display_thread_new(int argc,char **argv){
 		        else if(thread->state&ACORAL_THREAD_STATE_SUSPEND)
 				    printf("Sleep\t\t");
 		        else if(thread->state==ACORAL_THREAD_STATE_EXIT)
-				    printf("Freeze\t\t");
+				    printf("Exit\t\t");
+                else if(thread->state==ACORAL_THREAD_STATE_RELEASE)
+				    printf("Release\t\t");
 		        else
 				    printf("Error\t\t");
 		
@@ -60,7 +62,7 @@ void display_thread_new(int argc,char **argv){
         }
     }
 	
-	printf("------------------------------------------------------\r\n");
+	printf("----------------------------------------------------------------\r\n");
 
 	HAL_EXIT_CRITICAL();
 }

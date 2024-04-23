@@ -128,14 +128,11 @@ void cmd_exe(char *buf){
 #define SHELL_STACK_SIZE 1024
 void system_shell_init(){
 
-	acoral_comm_policy_data_t data;
 	head_cmd=NULL;
 	tail_cmd=NULL;
 	cmd_init();
 
-	data.prio=ACORAL_NONHARD_RT_PRIO_MIN;
-	data.prio_type=ACORAL_HARD_PRIO;
-	acoral_create_thread(acoral_shell_enter,SHELL_STACK_SIZE,NULL,"shell",NULL,ACORAL_SCHED_POLICY_COMM,&data);
+	acoral_create_thread("shell",acoral_shell_enter,NULL,SHELL_STACK_SIZE,NULL,ACORAL_SCHED_POLICY_COMM,ACORAL_NONHARD_RT_PRIO_MIN,ACORAL_HARD_PRIO,NULL);
 }
 
 

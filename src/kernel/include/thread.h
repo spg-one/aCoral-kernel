@@ -22,11 +22,8 @@
 #include "event.h"
 #include "policy.h"
 #include "soft_timer.h"
-#include "lsched.h"
 
 #include <stdbool.h>
-
-#define ACORAL_MINI_PRIO CFG_MAX_THREAD ///<aCoral最低优先级40
 
 extern unsigned char system_need_sched; 
 extern unsigned char system_sched_locked;
@@ -36,6 +33,10 @@ extern acoral_thread_t *acoral_cur_thread;
 #define ACORAL_MAX_PRIO_NUM ((CFG_MAX_THREAD + 1) & 0xff) ///<41。总共有40个线程，就有0~40共41个优先级
 #define PRIO_BITMAP_SIZE ((ACORAL_MAX_PRIO_NUM+31)/32) 
 
+/**
+ * @brief aCoral预设优先级列表
+ * 
+ */
 typedef enum{
 	ACORAL_INIT_PRIO,	///<init线程独有的0优先级
 	ACORAL_MAX_PRIO,	///<aCoral系统中允许的最高优先级
@@ -43,8 +44,8 @@ typedef enum{
 	ACORAL_HARD_RT_PRIO_MIN = ACORAL_HARD_RT_PRIO_MAX+CFG_HARD_RT_PRIO_NUM,	///<硬实时任务最低优先级
 	ACORAL_NONHARD_RT_PRIO_MAX,	///<非硬实时任务最高优先级
 
-	ACORAL_DAEMON_PRIO = ACORAL_MINI_PRIO-2,	///<daemon回收线程专用优先级
-	ACORAL_NONHARD_RT_PRIO_MIN,	///<非硬实时任务最低优先级
+    ACORAL_NONHARD_RT_PRIO_MIN = CFG_MAX_THREAD-2,	///<非硬实时任务最低优先级
+	ACORAL_DAEMON_PRIO,	///<daemon回收线程专用优先级
 	ACORAL_IDLE_PRIO	///<idle线程专用优先级，也是系统最低优先级ACORAL_MINI_PRIO
 }acoralPrioEnum;
 
@@ -69,27 +70,31 @@ typedef enum{
 }acoralThreadErrorEnum;
 
 /**
- * 
  *  @struct acoral_thread_t
  *  @brief 线程控制块TCB
  * 
- * 
  */
 typedef struct acoral_thread_tcb{
-  	acoral_res_t res;	            ///<资源id，线程创建后作为线程id
+  	acoral_res_t res;	            ///<资源tag，线程创建后作为线程id
 
     /* 基本信息 */
-    char *name;
-	acoralThreadStateEnum state;    ///<线程状态
+    char* name;
+	acoralThreadStateEnum state;    ///<线程状态  
+    void (*route)(void *args); 	    ///<线程函数
+	void* args; 				    ///<线程函数的参数
 	unsigned char prio;             ///<原始优先级
+    acoralPrioTypeEnum prio_type;   ///<线程优先级类型，包括硬实时任务ACORAL_HARD_PRIO、非硬实时任务ACORAL_NONHARD_PRIO
 	acoralSchedPolicyEnum policy;   ///<调度策略
-    unsigned int *stack;            ///<栈顶指针，高地址
-	unsigned int *stack_buttom;	    ///<栈底指针，低地址
+    void* policy_data;              ///<调度策略用的数据
+
+    /* 堆栈 */
+    unsigned int* stack;            ///<栈顶指针，高地址
+	unsigned int* stack_buttom;	    ///<栈底指针，低地址
 	unsigned int stack_size;        ///<栈大小
-    
+  
     /* 钩子 */
     acoral_list_t ready_hook;	        ///<用于挂载到全局就绪队列
-	acoral_list_t timeout_hook;         ///<
+	acoral_list_t timeout_hook;         ///<用于挂载到全局timeout队列
     acoral_list_t daem_hook;            ///<用于挂载到daem线程回收队列
     acoral_list_t ipc_waiting_hook;     ///<用于挂载到ipc（互斥量、信号量、消息）等待队列
 #if	CFG_THRD_PERIOD
@@ -102,9 +107,6 @@ typedef struct acoral_thread_tcb{
 	
     /* 获取的资源 */
     acoral_evt_t* evt; //SPG 只能获取一个信号量或者互斥量？
-
-	void*	private_data;
-	void*	data;
 }acoral_thread_t;
 
 /**
@@ -123,10 +125,9 @@ typedef struct{
 }thread_res_private_data;
 
 
-void acoral_suspend_thread(acoral_thread_t *thread);
 void acoral_resume_thread(acoral_thread_t *thread);
 void acoral_kill_thread(acoral_thread_t *thread);
-int system_thread_init(acoral_thread_t *thread,void (*route)(void *args),void (*exit)(void),void *args);
+int system_thread_init(acoral_thread_t *thread,void (*exit)(void));
 
 void system_thread_module_init(void);
 void acoral_unrdy_thread(acoral_thread_t *thread);
@@ -147,7 +148,7 @@ void acoral_thread_change_prio(acoral_thread_t* thread, unsigned int prio);
  * @param data 线程策略数据
  * @return int 成功返回线程id，失败返回-1
  */
-int acoral_create_thread(void (*route)(void *args),unsigned int stack_size,void *args,char *name,void *stack,acoralSchedPolicyEnum sched_policy,void *data);
+int acoral_create_thread(char *name, void (*route)(void *args),void *args,unsigned int stack_size,void *stack,acoralSchedPolicyEnum sched_policy,unsigned char prio,acoralPrioTypeEnum prio_type,void *data);
 
 /**
  * @brief 挂起当前线程
@@ -160,14 +161,14 @@ void acoral_suspend_self(void);
  * 
  * @param thread_id 要挂起的线程id
  */
-void acoral_suspend_thread_by_id(unsigned int thread_id);
+void acoral_suspend_thread_by_id(int thread_id);
 
 /**
  * @brief 唤醒某个线程
  * 
  * @param thread_id 要唤醒的线程id
  */
-void acoral_resume_thread_by_id(unsigned int thread_id);
+void acoral_resume_thread_by_id(int thread_id);
 
 /**
  * @brief 将当前线程延时
