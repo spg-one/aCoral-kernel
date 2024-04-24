@@ -29,6 +29,6 @@ void c2(){
 }
 
 void test_comm_thread(){
-    thread_c1 = acoral_create_thread("c1",c1,NULL,0,NULL,ACORAL_SCHED_POLICY_COMM,20,ACORAL_HARD_PRIO,NULL);
-    acoral_create_thread("c2",c2,NULL,0,NULL,ACORAL_SCHED_POLICY_COMM,22,ACORAL_HARD_PRIO,NULL);
+    thread_c1 = acoral_create_thread("c1",c1,NULL,0,ACORAL_SCHED_POLICY_COMM,20,ACORAL_HARD_PRIO,NULL);
+    acoral_create_thread("c2",c2,NULL,0,ACORAL_SCHED_POLICY_COMM,22,ACORAL_HARD_PRIO,NULL);
 }

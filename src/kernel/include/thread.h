@@ -63,12 +63,6 @@ typedef enum{
 	ACORAL_THREAD_STATE_DELAY = 1<<5,		///表示线程将在一段时间之后被重新唤醒并挂载到acoral_ready_queues上，对于普通线程来说，就是调用了delay接口，对于周期线程来说，就是周期
 }acoralThreadStateEnum;
 
-typedef enum{
-    ACORAL_ERR_THREAD,
-    ACORAL_ERR_THREAD_DELAY,
-    ACORAL_ERR_THREAD_NO_STACK  ///<线程栈指针为空
-}acoralThreadErrorEnum;
-
 /**
  *  @struct acoral_thread_t
  *  @brief 线程控制块TCB
@@ -85,7 +79,7 @@ typedef struct acoral_thread_tcb{
 	unsigned char prio;             ///<原始优先级
     acoralPrioTypeEnum prio_type;   ///<线程优先级类型，包括硬实时任务ACORAL_HARD_PRIO、非硬实时任务ACORAL_NONHARD_PRIO
 	acoralSchedPolicyEnum policy;   ///<调度策略
-    void* policy_data;              ///<调度策略用的数据
+    void* policy_data;              ///<调度策略专用数据
 
     /* 堆栈 */
     unsigned int* stack;            ///<栈顶指针，高地址
@@ -120,24 +114,19 @@ typedef struct{
 }acoral_rdy_queue_t;
 
 typedef struct{
-    acoral_list_t daem_thread_res_release_queue;
-    acoral_rdy_queue_t ready_queue;
+    acoral_list_t global_daem_release_queue;
+    acoral_rdy_queue_t global_ready_queue;
 }thread_res_private_data;
 
-
-void acoral_resume_thread(acoral_thread_t *thread);
-void acoral_kill_thread(acoral_thread_t *thread);
-int system_thread_init(acoral_thread_t *thread,void (*exit)(void));
-
+int thread_stack_init(acoral_thread_t *thread,void (*exit)(void));
 void system_thread_module_init(void);
-void acoral_unrdy_thread(acoral_thread_t *thread);
-void acoral_rdy_thread(acoral_thread_t *thread);
-void acoral_thread_change_prio(acoral_thread_t* thread, unsigned int prio);
+void unrdy_thread(acoral_thread_t *thread);
+void ready_thread(acoral_thread_t *thread);
 
 /***************线程控制API****************/
 
 /**
- * @brief 创建一个线程
+ * @brief aCoral创建线程API
  * 
  * @param route 线程函数
  * @param stack_size 线程栈大小
@@ -148,57 +137,65 @@ void acoral_thread_change_prio(acoral_thread_t* thread, unsigned int prio);
  * @param data 线程策略数据
  * @return int 成功返回线程id，失败返回-1
  */
-int acoral_create_thread(char *name, void (*route)(void *args),void *args,unsigned int stack_size,void *stack,acoralSchedPolicyEnum sched_policy,unsigned char prio,acoralPrioTypeEnum prio_type,void *data);
+int acoral_create_thread(char *name, void (*route)(void *args),void *args,unsigned int stack_size,acoralSchedPolicyEnum sched_policy,unsigned char prio,acoralPrioTypeEnum prio_type,void *data);
 
 /**
- * @brief 挂起当前线程
+ * @brief aCoral挂起当前线程API
  * 
  */
 void acoral_suspend_self(void);
 
 /**
- * @brief 挂起某个线程
+ * @brief aCoral挂起线程API
  * 
- * @param thread_id 要挂起的线程id
+ * @param thread_id 线程id
  */
 void acoral_suspend_thread_by_id(int thread_id);
 
 /**
- * @brief 唤醒某个线程
+ * @brief aCoral唤醒线程API
  * 
- * @param thread_id 要唤醒的线程id
+ * @param thread 线程指针
+ */
+void acoral_resume_thread(acoral_thread_t *thread);
+
+/**
+ * @brief aCoral唤醒线程API
+ * 
+ * @param thread_id 线程id
  */
 void acoral_resume_thread_by_id(int thread_id);
 
 /**
- * @brief 将当前线程延时
+ * @brief aCoral当前线程延时API
  * 
  * @param time 延时时间（毫秒）
  */
 void acoral_delay_self(unsigned int time);
 
 /**
- * @brief 干掉某个线程
+ * @brief aCoral杀死线程API
  * 
- * @param id 要干掉的线程id
+ * @param thread 线程指针
+ */
+void acoral_kill_thread(acoral_thread_t *thread);
+
+/**
+ * @brief aCoral杀死线程API
+ * 
+ * @param id 线程id
  */
 void acoral_kill_thread_by_id(int id);
 
 /**
- * @brief 结束当前线程
- * 
- */
-void comm_thread_exit(void);
-
-/**
- * @brief 改变当前线程优先级
+ * @brief aCoral改变当前线程优先级API
  * 
  * @param prio 目标优先级
  */
 void acoral_change_prio_self(unsigned int prio);
 
 /**
- * @brief 改变某个线程优先级
+ * @brief aCoral改变线程优先级API
  * 
  * @param thread_id 线程id
  * @param prio 目标优先级

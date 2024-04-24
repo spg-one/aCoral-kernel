@@ -23,7 +23,10 @@ acoral_res_system_t acoral_res_system = {
     {0},
     {0},
     {
+        /* system_res_ctrl_container[ACORAL_RES_UNKNOWN] */
         {0},
+
+        /* system_res_ctrl_container[ACORAL_RES_THREAD] */
         {
             .type = ACORAL_RES_THREAD,
             .size = sizeof(acoral_thread_t),                     // TCB的大小
@@ -34,10 +37,12 @@ acoral_res_system_t acoral_res_system = {
             .pools = NULL,                                      
             .list = {NULL , NULL},                              
             .type_private_data = &(thread_res_private_data){
-                .daem_thread_res_release_queue = NULL,
-                .ready_queue = NULL
+                .global_daem_release_queue = NULL,
+                .global_ready_queue = NULL
             }
         },
+
+        /* system_res_ctrl_container[ACORAL_RES_POLICY] */
         {
             .type = ACORAL_RES_POLICY,
             .size = sizeof(acoral_sched_policy_t),                     // TCB的大小
@@ -49,6 +54,7 @@ acoral_res_system_t acoral_res_system = {
             .list = {NULL , NULL},                              
         },
 #if CFG_EVT_MUTEX || CFG_EVT_SEM
+        /* system_res_ctrl_container[ACORAL_RES_EVENT] */
         {
             .type = ACORAL_RES_EVENT,
             .size = sizeof(acoral_evt_t),                  // event控制块ECB的大小
@@ -62,10 +68,11 @@ acoral_res_system_t acoral_res_system = {
 #endif
 
 #if CFG_DRIVER
-        acoral_driver_pool_ctrl,
+        acoral_driver_pool_ctrl,//SPG
 #endif
 
 #if CFG_MSG
+        /* system_res_ctrl_container[ACORAL_RES_MST] */
         {
             .type = ACORAL_RES_MST,
             .size = sizeof(acoral_msgctr_t),            // 消息容器控制块的大小
@@ -77,6 +84,7 @@ acoral_res_system_t acoral_res_system = {
             .list = {NULL , NULL},                      
         },
 
+        /* system_res_ctrl_container[ACORAL_RES_MSG] */
         {
             .type = ACORAL_RES_MSG,
             .size = sizeof(acoral_msg_t),               // 消息容器控制块的大小
@@ -88,6 +96,7 @@ acoral_res_system_t acoral_res_system = {
             .list = {NULL , NULL},                      
         },
 #endif
+        /* system_res_ctrl_container[ACORAL_RES_TIMER] */
         {
             .type = ACORAL_RES_TIMER,
             .size = sizeof(acoral_timer_t),               // 消息容器控制块的大小
@@ -97,6 +106,9 @@ acoral_res_system_t acoral_res_system = {
             .free_pools = NULL,                         
             .pools = NULL,                              
             .list = {NULL , NULL},                      
+            .type_private_data = &(timer_res_private_data){
+                .global_time_delay_queue = NULL,
+            }
         },
     }
 };

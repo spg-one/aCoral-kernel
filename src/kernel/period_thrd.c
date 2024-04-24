@@ -61,7 +61,7 @@ static int period_policy_thread_init(acoral_thread_t *thread,void *data){
     thread->thread_period_timer = period_timer;
     thread->thread_period_timer->owner = thread->res;
 
-	if(system_thread_init(thread,period_thread_exit)!=0){
+	if(thread_stack_init(thread,period_thread_exit)!=0){
 		printf("No thread stack:%s\n",thread->name);
 		acoral_enter_critical();
 		acoral_release_res((acoral_res_t *)thread);
@@ -130,7 +130,7 @@ void period_delay_deal(){
 		if(thread->state&ACORAL_THREAD_STATE_SUSPEND){
 			thread->stack=(unsigned int *)((char *)thread->stack_buttom+thread->stack_size-4);
 			thread->stack = HAL_STACK_INIT(thread->stack,thread->route,period_thread_exit,thread->args);
-			acoral_rdy_thread(thread);
+			ready_thread(thread);
 			// need_re_sched = 1;
 		}
 		period_thread_delay(thread,((acoral_period_policy_data_t*)thread->policy_data)->period_time_mm);

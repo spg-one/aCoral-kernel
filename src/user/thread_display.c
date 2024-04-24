@@ -5,12 +5,11 @@
 #include <stdio.h>
 
 void display_thread_new(int argc,char **argv){	
-	acoral_list_t *head,*tmp;
-	acoral_thread_t * thread;
+	acoral_list_t *head;
     acoral_list_t *list;
     acoral_res_t *res;
     acoral_pool_t* pool;
-
+    acoral_thread_t * thread;
 	head = acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].pools;
 	if (acoral_list_empty(head))
 	{
@@ -27,7 +26,7 @@ void display_thread_new(int argc,char **argv){
         pool = list_entry(list,acoral_pool_t,ctrl_list);
         for(int i =0 ; i<pool->num ; i++){
             res = (acoral_res_t*)(pool->base_adr + pool->size * i);
-            if(ACORAL_RES_TYPE(res->id) == ACORAL_RES_THREAD){
+            if(ACORAL_RES_TYPE(res->id) == ACORAL_RES_THREAD){ //表示资源被分配了，而不是free的资源
                 thread=list_entry(res,acoral_thread_t,res);
                 printf("%s\t\t",thread->name);
 		        printf("%d\t\t",thread->res.id);

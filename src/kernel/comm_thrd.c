@@ -15,6 +15,10 @@
 #include "hal.h"
 
 
+static void comm_thread_exit(){
+    acoral_kill_thread(acoral_cur_thread);
+}
+
 /**
  * @brief 初始化普通线程的一些数据
  * 
@@ -24,7 +28,7 @@
  */
 static int comm_policy_thread_init(acoral_thread_t *thread, void *data)
 {
-	if (system_thread_init(thread, comm_thread_exit) != 0)
+	if (thread_stack_init(thread, comm_thread_exit) != 0)
 	{
 		ACORAL_LOG_ERROR("No thread stack:%s", thread->name);
 		acoral_enter_critical();

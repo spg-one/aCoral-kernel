@@ -24,20 +24,35 @@
 acoral_list_t policy_list;
 
 acoral_sched_policy_t *acoral_get_policy_ctrl(unsigned char type){
-	acoral_list_t   *tmp,*head;
-	acoral_sched_policy_t  *policy_ctrl;
-	head=&policy_list;
-	tmp=head;
-	for(tmp=head->next;tmp!=head;tmp=tmp->next){
-		policy_ctrl=list_entry(tmp,acoral_sched_policy_t,list);
-		if(policy_ctrl->type==type)
-			return policy_ctrl;
-	}
+    acoral_list_t *head;
+    acoral_list_t *list;
+    acoral_pool_t* pool;
+    acoral_res_t *res;
+    acoral_sched_policy_t* policy_ctrl;
+
+    head = acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].pools;
+    for (list = head->next; list != head; list = list->next)
+	{
+        pool = list_entry(list,acoral_pool_t,ctrl_list);
+        for(int i =0 ; i<pool->num ; i++){
+            res = (acoral_res_t*)(pool->base_adr + pool->size * i);
+            if(ACORAL_RES_TYPE(res->id) == ACORAL_RES_POLICY){ //表示资源被分配了，而不是free的资源
+                policy_ctrl = list_entry(res,acoral_sched_policy_t,res);
+                if(policy_ctrl->type==type)
+                {
+                 return policy_ctrl;
+                }
+			
+	        }
+        }
+    }
 	return NULL;
 }
 
 int acoral_policy_thread_init(acoralSchedPolicyEnum policy,acoral_thread_t *thread,void *data){
 	acoral_sched_policy_t *policy_ctrl;
+
+    /* 取得策略控制块 */
 	policy_ctrl = acoral_get_policy_ctrl(policy);	
 	if(policy_ctrl == NULL || policy_ctrl->policy_thread_init == NULL){
 		acoral_enter_critical();
@@ -46,6 +61,8 @@ int acoral_policy_thread_init(acoralSchedPolicyEnum policy,acoral_thread_t *thre
 		ACORAL_LOG_ERROR("No thread policy support:%d\n",thread->policy);
 		return -1;
 	}
+
+    /* 调用策略初始化函数 */
 	return policy_ctrl->policy_thread_init(thread,data);
 }
 

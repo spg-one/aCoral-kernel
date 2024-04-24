@@ -132,7 +132,7 @@ void system_shell_init(){
 	tail_cmd=NULL;
 	cmd_init();
 
-	acoral_create_thread("shell",acoral_shell_enter,NULL,SHELL_STACK_SIZE,NULL,ACORAL_SCHED_POLICY_COMM,ACORAL_NONHARD_RT_PRIO_MIN,ACORAL_HARD_PRIO,NULL);
+	acoral_create_thread("shell",acoral_shell_enter,NULL,SHELL_STACK_SIZE,ACORAL_SCHED_POLICY_COMM,ACORAL_NONHARD_RT_PRIO_MIN,ACORAL_HARD_PRIO,NULL);
 }
 
 

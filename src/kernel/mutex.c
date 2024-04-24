@@ -157,10 +157,10 @@ acoralMutexRetVal acoral_mutex_pend(acoral_evt_t *evt, unsigned int timeout)
 			evt->count &= ~MUTEX_U_MASK;
 			evt->count |= highPrio << 8;
 		}
-		acoral_thread_change_prio(thread, highPrio);
+		acoral_thread_change_prio_by_id(thread->res.id, highPrio);
 	}
 	/*不需要或不能提高优先级*/
-	acoral_unrdy_thread(cur);
+	unrdy_thread(cur);
 	acoral_evt_queue_add(evt, cur);
 	if (timeout > 0)
 	{
@@ -224,7 +224,7 @@ acoralMutexRetVal acoral_mutex_pend2(acoral_evt_t *evt, unsigned int timeout)
 	}
 
 	/* 互斥量已被占有*/
-	acoral_unrdy_thread(cur);
+	unrdy_thread(cur);
 	acoral_evt_queue_add(evt, cur);
 	if (timeout > 0)
 	{
@@ -307,7 +307,7 @@ acoralMutexRetVal acoral_mutex_post(acoral_evt_t *evt)
 	evt->count &= MUTEX_U_MASK;
 	evt->count |= thread->prio;
 	evt->data = thread;
-	acoral_rdy_thread(thread);
+	ready_thread(thread);
 	acoral_exit_critical();
 	acoral_sched();
 	return MUTEX_SUCCED;

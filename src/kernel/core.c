@@ -47,9 +47,9 @@ static void init()
 	acoral_intr_disable();
 	ACORAL_LOG_TRACE("Init Thread Start");
 
-    acoral_list_t* daem_res_release_queue = &(((thread_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].type_private_data))->daem_thread_res_release_queue); ///< 将被daem线程回收的线程队列
+    acoral_list_t* daem_res_release_queue = &(((thread_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].type_private_data))->global_daem_release_queue); ///< 将被daem线程回收的线程队列
 
-	acoral_init_list(&time_delay_queue);
+	acoral_init_list(&(((timer_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_TIMER].type_private_data))->global_time_delay_queue));
 	acoral_init_list(&timeout_queue);
 	acoral_init_list(daem_res_release_queue);
 
@@ -64,7 +64,7 @@ static void init()
 
 	/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/
 #ifdef CFG_SHELL
-	// system_shell_init();
+	system_shell_init();
 #endif
 	user_main();
 	ACORAL_LOG_TRACE("Init Thread Done");
@@ -78,7 +78,7 @@ static void daem()
 {
 	acoral_thread_t *thread;
 	acoral_list_t *head, *tmp, *tmp1;
-    acoral_list_t* daem_res_release_queue = &(((thread_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].type_private_data))->daem_thread_res_release_queue); ///< 将被daem线程回收的线程队列
+    acoral_list_t* daem_res_release_queue = &(((thread_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].type_private_data))->global_daem_release_queue); ///< 将被daem线程回收的线程队列
 
 	head = daem_res_release_queue;
 	while (1)
@@ -120,7 +120,7 @@ static void main_cpu_start()
 {
 
 	/* 创建idle线程 */
-	idle_id = acoral_create_thread("idle",idle, NULL, IDLE_STACK_SIZE,  NULL, ACORAL_SCHED_POLICY_COMM, ACORAL_IDLE_PRIO,ACORAL_HARD_PRIO,NULL);
+	idle_id = acoral_create_thread("idle",idle, NULL, IDLE_STACK_SIZE, ACORAL_SCHED_POLICY_COMM, ACORAL_IDLE_PRIO,ACORAL_HARD_PRIO,NULL);
 	if (idle_id == -1) //SPG 不一定是-1才有问题吧
 	{
 		ACORAL_LOG_ERROR("Create Idle Thread Failed");
@@ -128,7 +128,7 @@ static void main_cpu_start()
 	}
 
 	/* 创建init线程 */
-	init_id = acoral_create_thread("init",init, "in init", INIT_STACK_SIZE,  NULL, ACORAL_SCHED_POLICY_COMM, ACORAL_INIT_PRIO,ACORAL_HARD_PRIO,NULL);
+	init_id = acoral_create_thread("init",init, "in init", INIT_STACK_SIZE, ACORAL_SCHED_POLICY_COMM, ACORAL_INIT_PRIO,ACORAL_HARD_PRIO,NULL);
 	if (init_id == -1)
 	{
 		ACORAL_LOG_ERROR("Create Init Thread Failed");
@@ -136,7 +136,7 @@ static void main_cpu_start()
 	}
 
 	/* 创建daem线程 */
-	daemon_id = acoral_create_thread("daemon",daem, NULL, DAEM_STACK_SIZE,  NULL, ACORAL_SCHED_POLICY_COMM, ACORAL_DAEMON_PRIO,ACORAL_HARD_PRIO,NULL);
+	daemon_id = acoral_create_thread("daemon",daem, NULL, DAEM_STACK_SIZE, ACORAL_SCHED_POLICY_COMM, ACORAL_DAEMON_PRIO,ACORAL_HARD_PRIO,NULL);
 	if (daemon_id == -1){
 		ACORAL_LOG_ERROR("Create Daem Thread Failed");
 		exit(2);

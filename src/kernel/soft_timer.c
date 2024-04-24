@@ -31,7 +31,7 @@
 #include "list.h"
 #include <stdbool.h>
 
-acoral_list_t time_delay_queue; ///<aCoral线程延时队列，调用线程delay相关函数的线程都会被加到这个队列上，等待一段具体时间后重新被唤醒
+acoral_list_t time_delay_queue; 
 /*----------------*/
 /*  延时处理队列timeout*/
 /*  pegasus   0719*/
@@ -92,7 +92,7 @@ void acoral_delayqueue_add(acoral_list_t *queue, acoral_thread_t *new){
 		thread = (acoral_thread_t *)acoral_get_res_by_id(((acoral_timer_t*)list_entry(tmp, acoral_timer_t, delay_queue_hook))->owner.id);
 		thread->thread_timer->delay_time-=delay2;
 	}
-	acoral_unrdy_thread(new);
+	unrdy_thread(new);
 
 	acoral_exit_critical();
 	acoral_sched();
@@ -102,7 +102,7 @@ void acoral_delayqueue_add(acoral_list_t *queue, acoral_thread_t *new){
 void time_delay_deal(){
 	acoral_list_t   *tmp,*tmp1,*head;
 	acoral_thread_t *thread;
-	head = &time_delay_queue;
+	head = &(((timer_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_TIMER].type_private_data))->global_time_delay_queue);
 	if(acoral_list_empty(head))
 	  	return;
 	thread=(acoral_thread_t *)acoral_get_res_by_id(((acoral_timer_t*)list_entry(head->next, acoral_timer_t, delay_queue_hook))->owner.id);
@@ -118,7 +118,7 @@ void time_delay_deal(){
 
 		tmp=tmp1;
 		thread->state&=~ACORAL_THREAD_STATE_DELAY;
-		acoral_rdy_thread(thread);
+		ready_thread(thread);
 	}
 }
 
@@ -182,6 +182,6 @@ void timeout_delay_deal()
 
 		tmp=tmp1;
 		/*thread->state*/
-		acoral_rdy_thread(thread);
+		ready_thread(thread);
 	}
 }

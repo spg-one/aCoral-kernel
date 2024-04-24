@@ -14,5 +14,5 @@ void test_period_thread(){
         .period_time_mm = 2000
     };
 
-    acoral_create_thread("p1",p1,NULL,0,NULL,ACORAL_SCHED_POLICY_PERIOD,21,ACORAL_HARD_PRIO,&p1data);
+    acoral_create_thread("p1",p1,NULL,0,ACORAL_SCHED_POLICY_PERIOD,21,ACORAL_HARD_PRIO,&p1data);
 }

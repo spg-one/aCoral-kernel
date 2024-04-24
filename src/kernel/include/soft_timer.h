@@ -32,9 +32,11 @@ typedef struct
     acoral_res_t owner;             ///<timer持有者，一般为线程
 }acoral_timer_t;
 
+typedef struct{
+    acoral_list_t global_time_delay_queue; ///<aCoral线程延时队列，调用线程delay相关函数的线程都会被加到这个队列上，等待一段具体时间后重新被唤醒
+}timer_res_private_data;
 
 int time_to_ticks(unsigned int time); 
-extern acoral_list_t time_delay_queue;
 extern acoral_list_t timeout_queue;
 
 void acoral_time_init(void);

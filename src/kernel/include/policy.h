@@ -43,6 +43,15 @@ typedef struct{
 
 void acoral_policy_delay_deal(void);
 acoral_sched_policy_t *acoral_get_policy_ctrl(unsigned char type);
+
+/**
+ * @brief 根据线程调度策略进行特异初始化的入口
+ * 
+ * @param policy 调度策略名
+ * @param thread 线程指针
+ * @param data 线程调度策略专用数据
+ * @return int 线程id
+ */
 int acoral_policy_thread_init(acoralSchedPolicyEnum policy,acoral_thread_t *thread,void *data);
 void acoral_sched_policy_init(void);
 void system_policy_thread_release(acoral_thread_t *thread);

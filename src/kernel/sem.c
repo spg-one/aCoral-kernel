@@ -142,7 +142,7 @@ acoralSemRetValEnum acoral_sem_pend(acoral_evt_t *evt, unsigned int timeout)
 	}
 
 	evt->count++;
-	acoral_unrdy_thread(cur);
+	unrdy_thread(cur);
 	if (timeout > 0)
 	{
 		cur->thread_timer->delay_time = time_to_ticks(timeout);
@@ -207,7 +207,7 @@ acoralSemRetValEnum acoral_sem_post(acoral_evt_t *evt)
 	timeout_queue_del(thread);
 	/*释放等待任务*/
 	acoral_evt_queue_del(thread);
-	acoral_rdy_thread(thread);
+	ready_thread(thread);
 	acoral_exit_critical();
 	acoral_sched();
 	return SEM_SUCCED;

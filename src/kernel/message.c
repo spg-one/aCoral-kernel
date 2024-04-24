@@ -189,7 +189,7 @@ void *acoral_msg_recv(acoral_msgctr_t *msgctr,
 		/*-----------------*/
 		msgctr->wait_thread_num++;
 		acoral_msgctr_queue_add(msgctr, cur);
-		acoral_unrdy_thread(cur);
+		unrdy_thread(cur);
 		acoral_exit_critical();
 		acoral_sched();
 		/*-----------------*/
@@ -239,7 +239,7 @@ unsigned int acoral_msgctr_del(acoral_msgctr_t *pmsgctr, unsigned int flag)
 			{
 				thread = list_entry(q, acoral_thread_t, ipc_waiting_hook);
 				// acoral_list_del  (&thread->ipc_waiting_hook);
-				acoral_rdy_thread(thread);
+				ready_thread(thread);
 			}
 		}
 
@@ -278,7 +278,7 @@ void wake_up_thread(acoral_list_t *head)
 	q = p->next;
 	thread = list_entry(q, acoral_thread_t, ipc_waiting_hook);
 	acoral_list_del(&thread->ipc_waiting_hook);
-	acoral_rdy_thread(thread);
+	ready_thread(thread);
 }
 
 void acoral_print_all_msg(acoral_msgctr_t *msgctr)
