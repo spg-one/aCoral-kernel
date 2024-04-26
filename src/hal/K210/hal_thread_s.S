@@ -13,17 +13,10 @@
  *  </table>
  */
 
-  .globl HAL_INTR_CTX_SWITCH
-  .type HAL_INTR_CTX_SWITCH, @function
-  .align 2
-
   .globl HAL_CONTEXT_SWITCH
   .type HAL_CONTEXT_SWITCH, @function
   .align 2
 
-  .globl HAL_INTR_SWITCH_TO
-  .type HAL_INTR_SWITCH_TO, @function
-  .align 2
 
   .globl HAL_SWITCH_TO
   .type HAL_SWITCH_TO, @function
@@ -93,7 +86,7 @@ HAL_CONTEXT_SWITCH: #//SPG要不要加@function？
     li   a0, 0x80
 save_mpie:
     sd a0,   2 * REGBYTES(sp)
-
+    sd x3,   3 * REGBYTES(sp)
     sd x4,   4 * REGBYTES(sp)
     sd x5,   5 * REGBYTES(sp)
     sd x6,   6 * REGBYTES(sp)
@@ -232,12 +225,3 @@ HAL_CTX_SWITCH_EXIT:
 #endif
 
     mret
-
-    
-HAL_INTR_CTX_SWITCH:
-    sd a3,  (a1)
-HAL_INTR_SWITCH_TO:  
-    ld a0, (a0)
-    ld t0, 0*REGBYTES(a0)
-    csrw mepc, t0
-    ret

@@ -28,7 +28,7 @@ typedef struct
 {
     acoral_res_t res;
     acoral_list_t delay_queue_hook; ///<timer挂载到目标队列的钩子
-    int delay_time;                 ///<timer将要等待的时间
+    int delay_time;                 ///<timer将要等待的时间(ticks)
     acoral_res_t owner;             ///<timer持有者，一般为线程
 }acoral_timer_t;
 

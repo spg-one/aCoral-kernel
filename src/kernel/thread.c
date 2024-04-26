@@ -337,14 +337,16 @@ void acoral_real_sched()
 	if (prev != next)
 	{
 		system_set_running_thread(next);
-		ACORAL_LOG_TRACE("Switch to Thread: %s",acoral_cur_thread->name);
+		
 		if (prev->state == ACORAL_THREAD_STATE_EXIT)
 		{
+            ACORAL_LOG_TRACE("Switch to Thread: %s",acoral_cur_thread->name);
 			prev->state = ACORAL_THREAD_STATE_RELEASE;
 			HAL_SWITCH_TO(&next->stack);
 			return;
 		}
 		/*线程切换*/
+        ACORAL_LOG_TRACE("Context Switch to Thread: %s",acoral_cur_thread->name);
 		HAL_CONTEXT_SWITCH(&prev->stack, &next->stack);
 	}
 }
@@ -360,6 +362,7 @@ unsigned long acoral_real_intr_sched(unsigned long old_sp)
 	if (prev != next)
 	{
 		system_set_running_thread(next);
+        ACORAL_LOG_TRACE("After Intr , Switch to Thread: %s's Stack",next->name);
 		// ACORAL_LOG_TRACE("Switch to Thread: %s\n",acoral_cur_thread->name);
 		if (prev->state == ACORAL_THREAD_STATE_EXIT)
 		{
