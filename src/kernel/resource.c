@@ -52,6 +52,11 @@ acoral_res_system_t acoral_res_system = {
             .free_pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].free_pools),                                  
             .pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].pools),                                   
             // .list = {NULL , NULL},                              
+            .type_private_data = &(policy_res_private_data){
+#if CFG_THRD_PERIOD
+                .global_period_wait_queue = NULL
+#endif
+            }
         },
 #if CFG_EVT_MUTEX || CFG_EVT_SEM
         /* system_res_ctrl_container[ACORAL_RES_EVENT] */

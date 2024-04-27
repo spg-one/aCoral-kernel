@@ -27,8 +27,6 @@
 
 #if CFG_THRD_PERIOD
 
-acoral_list_t period_wait_queue; ///<周期线程专用等待队列，差分队列。只要是周期线程，就会被挂载到这个队列上，延时时间就是周期，每次周期过后重新挂载
-
 /**
  * @brief 初始化周期线程的一些数据
  * 
@@ -85,7 +83,7 @@ void acoral_periodqueue_add(acoral_thread_t *new){
 	acoral_thread_t *thread;
 	int  delay2;
 	int  new_thread_period= new->thread_period_timer->delay_time;
-	head=&period_wait_queue;
+	head = &(((policy_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].type_private_data))->global_period_wait_queue);
 	new->state|=ACORAL_THREAD_STATE_DELAY;
 
     /* 找到period_wait_queue中新线程应该插入的位置并插入 */
@@ -114,7 +112,7 @@ void period_delay_deal(){
 	// int need_re_sched= 0;
 	acoral_list_t *tmp,*tmp1,*head;
 	acoral_thread_t * thread;
-	head=&period_wait_queue;
+	head = &(((policy_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].type_private_data))->global_period_wait_queue);
 	if(acoral_list_empty(head))
 	    	return;
 	thread=list_entry(head->next,acoral_thread_t,period_wait_hook);
@@ -147,7 +145,8 @@ void period_thread_exit(){
 
 
 void period_policy_init(void){
-	acoral_init_list(&period_wait_queue);
+    /* 初始化全局周期线程等待队列 */
+    acoral_init_list(&(((policy_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].type_private_data))->global_period_wait_queue));
 
     acoral_sched_policy_t* period_policy = acoral_get_res(ACORAL_RES_POLICY);
 

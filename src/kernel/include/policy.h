@@ -41,6 +41,14 @@ typedef struct{
 	void (*delay_deal)(void); 							///<线程延时函数，用于例如周期、时间片等和时间相关的调度策略
 }acoral_sched_policy_t;
 
+
+typedef struct{
+#if CFG_THRD_PERIOD
+    acoral_list_t global_period_wait_queue; ///<周期线程专用等待队列，差分队列。只要是周期线程，就会被挂载到这个队列上，延时时间就是周期，每次周期过后重新挂载
+#endif
+}policy_res_private_data;
+
+
 void acoral_policy_delay_deal(void);
 acoral_sched_policy_t *acoral_get_policy_ctrl(unsigned char type);
 
