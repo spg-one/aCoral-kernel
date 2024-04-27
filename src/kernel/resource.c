@@ -108,6 +108,7 @@ acoral_res_system_t acoral_res_system = {
             // .list = {NULL , NULL},                      
             .type_private_data = &(timer_res_private_data){
                 .global_time_delay_queue = NULL,
+                .global_timeout_queue = NULL
             }
         },
     }

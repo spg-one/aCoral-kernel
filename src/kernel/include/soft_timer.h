@@ -34,10 +34,10 @@ typedef struct
 
 typedef struct{
     acoral_list_t global_time_delay_queue; ///<aCoral线程延时队列，调用线程delay相关函数的线程都会被加到这个队列上，等待一段具体时间后重新被唤醒
+    acoral_list_t global_timeout_queue;    ///<aCoral获取资源（互斥量等）超时等待队列，即在timeout时间内获取即成功，否则超时失败
 }timer_res_private_data;
 
 int time_to_ticks(unsigned int time); 
-extern acoral_list_t timeout_queue;
 
 void acoral_time_init(void);
 int system_ticks_init();

@@ -47,11 +47,14 @@ static void init()
 	acoral_intr_disable();
 	ACORAL_LOG_TRACE("Init Thread Start");
 
-    acoral_list_t* daem_res_release_queue = &(((thread_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].type_private_data))->global_daem_release_queue); ///< 将被daem线程回收的线程队列
-
+    /* 初始化全局延时队列 */
 	acoral_init_list(&(((timer_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_TIMER].type_private_data))->global_time_delay_queue));
-	acoral_init_list(&timeout_queue);
-	acoral_init_list(daem_res_release_queue);
+    
+    /* 初始化全局超时队列 */
+	acoral_init_list(&(((timer_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_TIMER].type_private_data))->global_timeout_queue));
+    
+    /* 初始化daem线程回收的线程队列 */
+	acoral_init_list(&(((thread_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].type_private_data))->global_daem_release_queue));
 
 	if(system_ticks_init()!=0){
 		ACORAL_LOG_ERROR("Ticks Init Failed");
@@ -64,9 +67,9 @@ static void init()
 
 	/*应用级相关服务初始化,应用级不要使用延时函数，没有效果的*/
 #ifdef CFG_SHELL
-	system_shell_init();
+	// system_shell_init();
 #endif
-	// user_main();
+	user_main();
 	ACORAL_LOG_TRACE("Init Thread Done");
 }
 

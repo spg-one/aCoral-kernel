@@ -31,12 +31,10 @@
 #include "list.h"
 #include <stdbool.h>
 
-acoral_list_t time_delay_queue; 
 /*----------------*/
 /*  延时处理队列timeout*/
 /*  pegasus   0719*/
 /*----------------*/
-acoral_list_t timeout_queue; ///<aCoral获取资源（互斥量等）超时等待队列，即在timeout时间内获取即成功，否则超时失败
 static unsigned int ticks;
 
 int time_to_ticks(unsigned int mtime){
@@ -128,7 +126,7 @@ void timeout_queue_add(acoral_thread_t *new)
 	acoral_thread_t *thread;
 	int  delay2;
 	int  delay= new->thread_timer->delay_time; //SPG用tcb的delay，delay线程也用delay成员，冲突？
-	head=&timeout_queue;
+	head = &(((timer_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_TIMER].type_private_data))->global_timeout_queue);
 	acoral_enter_critical();
 
 	for (tmp=head->next;delay2=delay,tmp!=head; tmp=tmp->next){
@@ -162,7 +160,7 @@ void timeout_delay_deal()
 	acoral_list_t *tmp, *tmp1, *head;
 	acoral_thread_t  *thread;
 
-	head = &timeout_queue;
+	head = &(((timer_res_private_data*)(acoral_res_system.system_res_ctrl_container[ACORAL_RES_TIMER].type_private_data))->global_timeout_queue);
 	if(acoral_list_empty(head))
 	{
 	  	return;
