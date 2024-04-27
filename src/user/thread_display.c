@@ -10,7 +10,7 @@ void display_thread_new(int argc,char **argv){
     acoral_res_t *res;
     acoral_pool_t* pool;
     acoral_thread_t * thread;
-	head = acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].pools;
+	head = &acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].pools;
 	if (acoral_list_empty(head))
 	{
         return;

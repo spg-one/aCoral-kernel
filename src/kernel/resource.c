@@ -33,9 +33,9 @@ acoral_res_system_t acoral_res_system = {
             .num_per_pool = (CFG_MAX_THREAD>20?20:CFG_MAX_THREAD), // 每个TCB池中的TCB数量
             .num = 0,                                            // 初始时没有创建 TCB 池
             .max_pools = CFG_MAX_THREAD/(CFG_MAX_THREAD>20?20:CFG_MAX_THREAD), // 最多允许创建TCB池的数量
-            .free_pools = NULL,                                  
-            .pools = NULL,                                      
-            .list = {NULL , NULL},                              
+            .free_pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].free_pools),                                  
+            .pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_THREAD].pools),                                      
+            // .list = {NULL , NULL},                              
             .type_private_data = &(thread_res_private_data){
                 .global_daem_release_queue = NULL,
                 .global_ready_queue = NULL
@@ -49,9 +49,9 @@ acoral_res_system_t acoral_res_system = {
             .num_per_pool = 6, // 每个TCB池中的TCB数量
             .num = 0,                                            // 初始时没有创建 TCB 池
             .max_pools = 2, // 最多允许创建TCB池的数量
-            .free_pools = NULL,                                  
-            .pools = NULL,                                      
-            .list = {NULL , NULL},                              
+            .free_pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].free_pools),                                  
+            .pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].pools),                                   
+            // .list = {NULL , NULL},                              
         },
 #if CFG_EVT_MUTEX || CFG_EVT_SEM
         /* system_res_ctrl_container[ACORAL_RES_EVENT] */
@@ -61,9 +61,9 @@ acoral_res_system_t acoral_res_system = {
             .num_per_pool = 8,                             // 每个ECB池中的ECB数量
             .num = 0,                                      // 初始时没有创建ECB池
             .max_pools = 4,                                // 最多允许创建ECB池的数量
-            .free_pools = NULL,                           
-            .pools = NULL,                                 
-            .list = {NULL , NULL},                         
+            .free_pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_EVENT].free_pools),                                  
+            .pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_EVENT].pools),                                 
+            // .list = {NULL , NULL},                         
         },
 #endif
 
@@ -79,9 +79,9 @@ acoral_res_system_t acoral_res_system = {
             .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
             .num = 0,                                   // 初始时没有创建消息容器控制块池
             .max_pools = 4,                             // 最多允许创建消息容器控制块池的数量
-            .free_pools = NULL,                         
-            .pools = NULL,                              
-            .list = {NULL , NULL},                      
+            .free_pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_MST].free_pools),                                  
+            .pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_MST].pools),                        
+            // .list = {NULL , NULL},                      
         },
 
         /* system_res_ctrl_container[ACORAL_RES_MSG] */
@@ -91,9 +91,9 @@ acoral_res_system_t acoral_res_system = {
             .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
             .num = 0,                                   // 初始时没有创建消息容器控制块池
             .max_pools = 4,                             // 最多允许创建消息容器控制块池的数量
-            .free_pools = NULL,                         
-            .pools = NULL,                              
-            .list = {NULL , NULL},                      
+            .free_pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_MSG].free_pools),                                  
+            .pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_MSG].pools),                           
+            // .list = {NULL , NULL},                      
         },
 #endif
         /* system_res_ctrl_container[ACORAL_RES_TIMER] */
@@ -103,9 +103,9 @@ acoral_res_system_t acoral_res_system = {
             .num_per_pool = 10,                         // 每个消息容器控制块池中的消息容器控制块数量
             .num = 0,                                   // 初始时没有创建消息容器控制块池
             .max_pools = 2,                             // 最多允许创建消息容器控制块池的数量
-            .free_pools = NULL,                         
-            .pools = NULL,                              
-            .list = {NULL , NULL},                      
+            .free_pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_TIMER].free_pools),                                  
+            .pools = LIST_HEAD_INIT(acoral_res_system.system_res_ctrl_container[ACORAL_RES_TIMER].pools),                             
+            // .list = {NULL , NULL},                      
             .type_private_data = &(timer_res_private_data){
                 .global_time_delay_queue = NULL,
             }
@@ -153,8 +153,8 @@ static int allocate_res_pool(acoral_res_pool_ctrl_t *pool_ctrl)
 	pool->res_free = pool->base_adr;
 	pool->free_num = pool->num;
 	acoral_pool_res_init(pool);
-	acoral_list_add2_tail(&pool->ctrl_list, pool_ctrl->pools);
-	acoral_list_add2_tail(&pool->free_list, pool_ctrl->free_pools);
+	acoral_list_add2_tail(&pool->ctrl_list, &pool_ctrl->pools);
+	acoral_list_add2_tail(&pool->free_list, &pool_ctrl->free_pools);
 
 	pool_ctrl->num++;
 	return 0;
@@ -169,7 +169,7 @@ static void release_all_res_pool(acoral_res_pool_ctrl_t *pool_ctrl)
 {
 	acoral_pool_t *pool;
 	acoral_list_t *list, *head;
-	head = pool_ctrl->pools;
+	head = &pool_ctrl->pools;
 	if (acoral_list_empty(head))
 		return;
 	for (list = head->next; list != head; list = list->next)
@@ -194,7 +194,7 @@ acoral_res_t *acoral_get_res(acoralResourceTypeEnum res_type)
 	acoral_pool_t *pool;
 	acoral_enter_critical();
     acoral_res_pool_ctrl_t* pool_ctrl = &(acoral_res_system.system_res_ctrl_container[res_type]);
-	first = pool_ctrl->free_pools->next;
+	first = pool_ctrl->free_pools.next;
 	if (acoral_list_empty(first))
 	{
 		if (allocate_res_pool(pool_ctrl))
@@ -204,7 +204,7 @@ acoral_res_t *acoral_get_res(acoralResourceTypeEnum res_type)
 		}
 		else
 		{
-			first = pool_ctrl->free_pools->next;
+			first = pool_ctrl->free_pools.next;
 		}
 	}
 	pool = list_entry(first, acoral_pool_t, free_list);
@@ -255,7 +255,7 @@ void acoral_release_res(acoral_res_t *res)
 	pool->free_num++;
 	if (acoral_list_empty(&pool->free_list))
     {
-        acoral_list_add(&pool->free_list, pool_ctrl->free_pools);
+        acoral_list_add(&pool->free_list, &pool_ctrl->free_pools);
     }
 		
 	return;
@@ -307,11 +307,11 @@ void acoral_pool_res_init(acoral_pool_t *pool)
 void acoral_pool_ctrl_init(acoral_res_pool_ctrl_t *pool_ctrl)
 {
 	unsigned int size;
-	pool_ctrl->free_pools = &pool_ctrl->list[0];
-	pool_ctrl->pools = &pool_ctrl->list[1];
+	// pool_ctrl->free_pools = &pool_ctrl->list[0];
+	// pool_ctrl->pools = &pool_ctrl->list[1];
 
-	acoral_init_list(pool_ctrl->pools);
-	acoral_init_list(pool_ctrl->free_pools);
+	// acoral_init_list(pool_ctrl->pools);
+	// acoral_init_list(pool_ctrl->free_pools);
 
 	/* 调整资源池中资源的个数，以最大化利用分配的内存，详见绿书p144 */
 	size = acoral_malloc_adjust_size(pool_ctrl->size * pool_ctrl->num_per_pool);

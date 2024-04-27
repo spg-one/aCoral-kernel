@@ -30,7 +30,7 @@ acoral_sched_policy_t *acoral_get_policy_ctrl(unsigned char type){
     acoral_res_t *res;
     acoral_sched_policy_t* policy_ctrl;
 
-    head = acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].pools;
+    head = &acoral_res_system.system_res_ctrl_container[ACORAL_RES_POLICY].pools;
     for (list = head->next; list != head; list = list->next)
 	{
         pool = list_entry(list,acoral_pool_t,ctrl_list);

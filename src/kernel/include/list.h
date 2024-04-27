@@ -30,6 +30,8 @@ typedef struct acoral_list acoral_list_t;
 	(ptr)->next = (ptr); (ptr)->prev = (ptr); \
 } while (0)
 
+#define LIST_HEAD_INIT(name) { &(name), &(name) }
+
 #define acoral_list_empty(head) ((head)->next==(head))
 
 /**
