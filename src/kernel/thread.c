@@ -123,11 +123,9 @@ void acoral_delay_self(unsigned int time){
 void acoral_kill_thread(acoral_thread_t *thread){
 	acoral_evt_t *evt;
 	acoral_enter_critical();
-        /*	*/
-        /*	*/
-	if(thread->state&ACORAL_THREAD_STATE_SUSPEND){
+
+	if(thread->state & ACORAL_THREAD_STATE_SUSPEND){
 		evt=thread->evt;
-		/**/
 		if(thread->state&ACORAL_THREAD_STATE_DELAY){
 			acoral_list_del(&thread->thread_timer->delay_queue_hook);
 		}else

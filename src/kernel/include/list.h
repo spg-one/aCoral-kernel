@@ -15,6 +15,7 @@
 
 #ifndef ACORAL_LIST_H
 #define ACORAL_LIST_H
+
 #include <stddef.h>
 // #define offsetof(TYPE, MEMBER) ((unsigned int) &((TYPE *)0)->MEMBER)
 
@@ -26,9 +27,14 @@ struct acoral_list {
 };
 typedef struct acoral_list acoral_list_t;
 
-#define acoral_init_list(ptr) do { \
-	(ptr)->next = (ptr); (ptr)->prev = (ptr); \
-} while (0)
+// #define acoral_init_list(ptr) do { 
+// 	(ptr)->next = (ptr); (ptr)->prev = (ptr); 
+// } while (0)
+
+inline void acoral_init_list(acoral_list_t* list_hook){
+    list_hook->next = list_hook;
+    list_hook->prev = list_hook;
+}
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 

@@ -102,7 +102,6 @@ typedef struct {
   unsigned int max_pools;       ///< 该资源池控制块最多可管理的资源池数量
   acoral_list_t free_pools;    ///< 该资源池控制块当前管理的资源池中未满的资源池链表表头
   acoral_list_t pools;         ///< 该资源池控制块管理的所有资源池的链表
-//   acoral_list_t list[2];
   void* type_private_data;      ///< 该资源池控制块所拥有的一些独占数据结构，一般都是一些全局列表、变量等，放在一起便于管理
 }acoral_res_pool_ctrl_t;
 
