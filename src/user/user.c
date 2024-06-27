@@ -6,6 +6,7 @@ void user_main(){
     // test_comm_thread();
     // test_period_thread();
     // test_iris();
-    test_yolo2();
+    // test_yolo2();
+    test_dag();
 
 }
